@@ -1,0 +1,319 @@
+/* ===== UngdrooFish Shell Layout (Sidebar + Drawer) ===== */
+
+:root {
+  --uf-bg: #f4f8f5;
+  --uf-surface: #ffffff;
+  --uf-sidebar-bg: #0f2419;
+  --uf-sidebar-active: #1b3d2a;
+  --uf-sidebar-text: #8faa98;
+  --uf-sidebar-text-active: #ffffff;
+  --uf-text: #0f2419;
+  --uf-text-muted: #5a7265;
+  --uf-accent: #10b981;
+  --uf-accent-hover: #059669;
+  --uf-accent-soft: #ecfdf5;
+  --uf-border: #d7e5dc;
+  --uf-border-light: #eaf3ee;
+  --uf-green: #10b981;
+  --uf-red: #ef4444;
+  --uf-radius: 10px;
+  --uf-radius-sm: 6px;
+  --uf-font: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
+  --uf-mono: 'JetBrains Mono', monospace;
+  --uf-sidebar-w: 72px;
+  --uf-subheader-h: 48px;
+  --uf-drawer-w: 420px;
+}
+
+/* ===== Shell ===== */
+.uf-shell {
+  height: 100vh;
+  display: flex;
+  background: var(--uf-bg);
+  overflow: hidden;
+  font-family: var(--uf-font);
+  color: var(--uf-text);
+}
+
+/* ===== Left Sidebar (vertical navigation) ===== */
+.uf-sidebar {
+  width: var(--uf-sidebar-w);
+  background: var(--uf-sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  flex-shrink: 0;
+  color: var(--uf-sidebar-text);
+}
+
+.uf-sidebar-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: transform 0.2s;
+}
+
+.uf-sidebar-logo:hover { transform: scale(1.05); }
+
+.uf-sidebar-divider {
+  width: 32px;
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 8px 0 16px;
+}
+
+/* Step indicators (vertical dots) */
+.uf-steps-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.uf-step-item {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--uf-mono);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--uf-sidebar-text);
+}
+
+.uf-step-item:hover:not(.uf-step-disabled) {
+  background: var(--uf-sidebar-active);
+  color: var(--uf-sidebar-text-active);
+}
+
+.uf-step-item.uf-step-active {
+  background: var(--uf-accent);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.uf-step-item.uf-step-completed {
+  color: var(--uf-green);
+}
+
+.uf-step-item.uf-step-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.uf-step-item::before {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--uf-sidebar-active);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--uf-font);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 1000;
+}
+
+.uf-step-item:hover::before {
+  opacity: 1;
+}
+
+.uf-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-top: 16px;
+}
+
+.uf-sidebar-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--uf-sidebar-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.uf-sidebar-btn:hover {
+  background: var(--uf-sidebar-active);
+  color: var(--uf-sidebar-text-active);
+}
+
+/* ===== Main Area ===== */
+.uf-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  position: relative;
+}
+
+/* Subheader (compact top bar) */
+.uf-subheader {
+  height: var(--uf-subheader-h);
+  background: var(--uf-surface);
+  border-bottom: 1px solid var(--uf-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.uf-subheader-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.uf-crumb {
+  font-size: 13px;
+  color: var(--uf-text-muted);
+  font-weight: 500;
+}
+
+.uf-crumb-arrow {
+  color: var(--uf-border);
+  font-size: 11px;
+}
+
+.uf-crumb-current {
+  font-size: 14px;
+  color: var(--uf-text);
+  font-weight: 600;
+}
+
+.uf-subheader-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.uf-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--uf-text-muted);
+  padding: 4px 10px;
+  background: var(--uf-border-light);
+  border-radius: 100px;
+}
+
+.uf-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d1d5db;
+}
+
+.uf-status.processing .uf-status-dot { background: var(--uf-accent); animation: uf-pulse 1.5s ease-in-out infinite; }
+.uf-status.completed .uf-status-dot,
+.uf-status.ready .uf-status-dot { background: var(--uf-green); }
+.uf-status.error .uf-status-dot { background: var(--uf-red); }
+
+@keyframes uf-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+.uf-toggle-graph {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--uf-border-light);
+  border: 1px solid var(--uf-border);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--uf-text);
+  cursor: pointer;
+  font-family: var(--uf-font);
+  transition: all 0.15s;
+}
+
+.uf-toggle-graph:hover {
+  background: var(--uf-accent-soft);
+  border-color: var(--uf-accent);
+  color: var(--uf-accent);
+}
+
+.uf-toggle-graph.active {
+  background: var(--uf-accent);
+  border-color: var(--uf-accent);
+  color: #fff;
+}
+
+/* ===== Content + Drawer ===== */
+.uf-content-wrap {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  position: relative;
+}
+
+.uf-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--uf-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Graph drawer on the right (slide-in) */
+.uf-drawer {
+  width: var(--uf-drawer-w);
+  background: var(--uf-surface);
+  border-left: 1px solid var(--uf-border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  transition: width 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.25s;
+  overflow: hidden;
+}
+
+.uf-drawer.collapsed {
+  width: 0;
+  opacity: 0;
+  border-left: none;
+}
+
+.uf-drawer.expanded {
+  width: calc(100% - 0px);
+}
+
+/* Fullscreen mode for drawer */
+.uf-shell.graph-fullscreen .uf-content {
+  display: none;
+}
+
+.uf-shell.graph-fullscreen .uf-drawer {
+  width: 100%;
+}

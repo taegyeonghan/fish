@@ -1,0 +1,58 @@
+[project]
+name = "ungdroo-fish-backend"
+version = "0.1.0"
+description = "UngdrooFish - 투자자 토론 시뮬레이션 엔진"
+requires-python = ">=3.11"
+license = { text = "AGPL-3.0" }
+authors = [
+    { name = "UngdrooFish Team" }
+]
+
+dependencies = [
+    # 핵심 프레임워크
+    "flask>=3.0.0",
+    "flask-cors>=6.0.0",
+
+    # LLM
+    "openai>=1.0.0",
+
+    # 로컬 그래프 엔진 (ZEP 대체)
+    "networkx>=3.0",
+    "sentence-transformers>=2.2.0",
+
+    # OASIS 소셜미디어 시뮬레이션
+    "camel-oasis==0.2.5",
+    "camel-ai==0.2.78",
+
+    # 파일 처리
+    "PyMuPDF>=1.24.0",
+    "charset-normalizer>=3.0.0",
+    "chardet>=5.0.0",
+
+    # MCP 클라이언트
+    "httpx>=0.27.0",
+
+    # 유틸리티
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pipreqs>=0.5.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

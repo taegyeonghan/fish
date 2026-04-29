@@ -1,0 +1,33 @@
+# ===========================================
+# UngdrooFish Backend Dependencies
+# ===========================================
+# Python 3.11+ required
+# Install: pip install -r requirements.txt
+# ===========================================
+
+# =============  =============
+flask>=3.0.0
+flask-cors>=6.0.0
+
+# ============= LLM  =============
+# OpenAI SDK（ OpenAI  LLM）
+openai>=1.0.0
+
+# ============= Zep Cloud =============
+zep-cloud==3.13.0
+
+# ============= OASIS  =============
+# OASIS 
+camel-oasis==0.2.5
+camel-ai==0.2.78
+
+# =============  =============
+PyMuPDF>=1.24.0
+# （UTF-8）
+charset-normalizer>=3.0.0
+chardet>=5.0.0
+
+# =============  =============
+python-dotenv>=1.0.0
+
+pydantic>=2.0.0
