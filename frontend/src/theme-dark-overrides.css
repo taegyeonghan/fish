@@ -1,0 +1,586 @@
+/* Waiker Forecast — dark-mode override skin (auto-generated).
+   Applies only when embedded in the main app AND dark theme: html.waiker-embed.waiker-dark
+   Maps the components hardcoded light palette -> dark. Component sources untouched. */
+
+/* ===== App.vue (2 rules) ===== */
+html.waiker-embed.waiker-dark #app {
+  color: #e5e7eb !important;
+  background-color: #1f2937 !important;
+}
+html.waiker-embed.waiker-dark ::-webkit-scrollbar-thumb {
+  background: #4b5563 !important;
+}
+
+/* ===== views/Home.vue (10 rules) ===== */
+html.waiker-embed.waiker-dark .home {
+  --c-bg: #1f2937 !important;
+  --c-surface: #1f2937 !important;
+  --c-text: #e5e7eb !important;
+  --c-accent-soft: rgba(99,102,241,0.16) !important;
+  --c-border: #374151 !important;
+  --c-border-soft: #243040 !important;
+}
+html.waiker-embed.waiker-dark .nav-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .hero-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .card:hover { border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .card-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .time-config-card:hover { border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .tc-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .seg-btn.active { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .tc-summary { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .history-title { color: #e5e7eb !important; }
+
+/* ===== views/Process.vue (45 rules) ===== */
+html.waiker-embed.waiker-dark .process-page { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .left-panel { border-right: 1px solid #374151 !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .panel-header { border-bottom: 1px solid #374151 !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .stat-val { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .stat-divider { color: #374151 !important; }
+html.waiker-embed.waiker-dark .action-btn:hover:not(:disabled) { background: #243040 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .loading-ring:nth-child(1) { border-top-color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .loading-text,
+html.waiker-embed.waiker-dark .waiting-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .detail-panel { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .detail-panel-header { background: #1f2937 !important; border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .detail-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .detail-close:hover { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .detail-value { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .detail-summary { color: #e5e7eb !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .label-tag { background: #243040 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .edge-relation { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .edge-source,
+html.waiker-embed.waiker-dark .edge-target { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .detail-value.highlight { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .detail-subtitle { color: #e5e7eb !important; border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .properties-list { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .property-value { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .episode-tag { background: #243040 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .graph-legend { border-top: 1px solid #374151 !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .legend-label { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .right-panel { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .process-phase { border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .phase-header { background: #1f2937 !important; border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .process-phase.active .phase-header { background: #243040 !important; }
+html.waiker-embed.waiker-dark .process-phase.completed .phase-header { background: #243040 !important; }
+html.waiker-embed.waiker-dark .phase-num { color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .phase-status { background: #374151 !important; }
+html.waiker-embed.waiker-dark .entity-tag { background: #243040 !important; border: 1px solid #374151 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .relation-item { border-bottom: 1px dashed #374151 !important; }
+html.waiker-embed.waiker-dark .rel-source,
+html.waiker-embed.waiker-dark .rel-target { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .ontology-progress { background: #243040 !important; }
+html.waiker-embed.waiker-dark .progress-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .waiting-state { background: #1f2937 !important; border: 1px dashed #374151 !important; }
+html.waiker-embed.waiker-dark .progress-bar { background: #374151 !important; }
+html.waiker-embed.waiker-dark .result-item { background: #243040 !important; }
+html.waiker-embed.waiker-dark .result-value { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .next-step-section { border-top: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .next-step-btn:disabled { background: #4b5563 !important; }
+html.waiker-embed.waiker-dark .project-panel { border-top: 1px solid #374151 !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .project-header { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .project-item { border-bottom: 1px dashed #374151 !important; }
+html.waiker-embed.waiker-dark .item-value { color: #e5e7eb !important; }
+@media (max-width: 1024px) {
+  html.waiker-embed.waiker-dark .left-panel { border-bottom: 1px solid #374151 !important; }
+}
+
+/* ===== components/GraphPanel.vue (29 rules) ===== */
+html.waiker-embed.waiker-dark .graph-panel { background-color: #1f2937 !important; }
+
+html.waiker-embed.waiker-dark .panel-header { background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0)) !important; }
+
+html.waiker-embed.waiker-dark .panel-title { color: #e5e7eb !important; }
+
+html.waiker-embed.waiker-dark .tool-btn { border: 1px solid #374151 !important; background: #1f2937 !important; }
+
+html.waiker-embed.waiker-dark .tool-btn:hover { background: #243040 !important; color: #e5e7eb !important; border-color: #4b5563 !important; }
+
+html.waiker-embed.waiker-dark .graph-legend { background: rgba(255,255,255,0.95) !important; border: 1px solid #374151 !important; }
+
+html.waiker-embed.waiker-dark .legend-item { color: #e5e7eb !important; }
+
+html.waiker-embed.waiker-dark .edge-labels-toggle { background: #1f2937 !important; border: 1px solid #374151 !important; }
+
+html.waiker-embed.waiker-dark .slider { background-color: #374151 !important; }
+
+html.waiker-embed.waiker-dark .detail-panel { background: #1f2937 !important; border: 1px solid #374151 !important; }
+
+html.waiker-embed.waiker-dark .detail-panel-header { background: #1f2937 !important; border-bottom: 1px solid #374151 !important; }
+
+html.waiker-embed.waiker-dark .detail-title { color: #e5e7eb !important; }
+
+html.waiker-embed.waiker-dark .detail-close:hover { color: #e5e7eb !important; }
+
+html.waiker-embed.waiker-dark .detail-value { color: #e5e7eb !important; }
+
+html.waiker-embed.waiker-dark .detail-value.fact-text { color: #e5e7eb !important; }
+
+html.waiker-embed.waiker-dark .detail-section { border-top: 1px solid #374151 !important; }
+
+html.waiker-embed.waiker-dark .property-value { color: #e5e7eb !important; }
+
+html.waiker-embed.waiker-dark .summary-text { color: #e5e7eb !important; }
+
+html.waiker-embed.waiker-dark .label-tag { background: #243040 !important; border: 1px solid #374151 !important; color: #e5e7eb !important; }
+
+html.waiker-embed.waiker-dark .episode-tag { background: #1f2937 !important; border: 1px solid #374151 !important; }
+
+html.waiker-embed.waiker-dark .edge-relation-header { background: #1f2937 !important; color: #e5e7eb !important; }
+
+html.waiker-embed.waiker-dark .self-loop-header { background: #1f2937 !important; border: 1px solid #374151 !important; }
+
+html.waiker-embed.waiker-dark .self-loop-item { background: #1f2937 !important; border: 1px solid #374151 !important; }
+
+html.waiker-embed.waiker-dark .self-loop-item-header { background: #243040 !important; }
+
+html.waiker-embed.waiker-dark .self-loop-item-header:hover { background: #374151 !important; }
+
+html.waiker-embed.waiker-dark .self-loop-item.expanded .self-loop-item-header { background: #374151 !important; }
+
+html.waiker-embed.waiker-dark .self-loop-index { color: #e5e7eb !important; background: #4b5563 !important; }
+
+html.waiker-embed.waiker-dark .self-loop-name { color: #e5e7eb !important; }
+
+html.waiker-embed.waiker-dark .self-loop-toggle { color: #e5e7eb !important; background: #4b5563 !important; }
+
+html.waiker-embed.waiker-dark .self-loop-item.expanded .self-loop-toggle { background: #4b5563 !important; }
+
+html.waiker-embed.waiker-dark .self-loop-item-content { border-top: 1px solid #374151 !important; }
+
+/* ===== components/HistoryDatabase.vue (37 rules) ===== */
+html.waiker-embed.waiker-dark .section-line { background: linear-gradient(90deg, transparent, #374151, transparent) !important; }
+html.waiker-embed.waiker-dark .project-card { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .card-header { border-bottom-color: #374151 !important; }
+html.waiker-embed.waiker-dark .card-delete-btn { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .card-delete-btn:hover:not(:disabled) { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .card-files-wrapper { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .files-more { background: rgba(255, 255, 255, 0.06) !important; }
+html.waiker-embed.waiker-dark .file-item { background: rgba(255, 255, 255, 0.06) !important; }
+html.waiker-embed.waiker-dark .file-item:hover { background: rgba(255, 255, 255, 0.1) !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .file-tag.txt { background: #243040 !important; }
+html.waiker-embed.waiker-dark .file-tag.other { background: #243040 !important; }
+html.waiker-embed.waiker-dark .file-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .project-card:hover .card-files-wrapper { background: #1f2937 !important; border-color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .card-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .card-footer { border-top-color: #374151 !important; }
+html.waiker-embed.waiker-dark .loading-spinner { border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .modal-content { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .modal-header { border-bottom-color: #374151 !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .modal-id { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .modal-progress { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .modal-progress.not-started { background: #243040 !important; }
+html.waiker-embed.waiker-dark .modal-close:hover { background: #243040 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .modal-requirement { color: #e5e7eb !important; background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .modal-files::-webkit-scrollbar-track { background: #243040 !important; }
+html.waiker-embed.waiker-dark .modal-files::-webkit-scrollbar-thumb { background: #4b5563 !important; }
+html.waiker-embed.waiker-dark .modal-file-item { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .modal-file-item:hover { border-color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .modal-file-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .modal-empty { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .modal-divider { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .divider-line { background: linear-gradient(90deg, transparent, #374151, transparent) !important; }
+html.waiker-embed.waiker-dark .modal-actions { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .modal-btn { border-color: #374151 !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .modal-btn:disabled { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .btn-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .modal-btn.btn-delete:hover:not(:disabled) { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .modal-btn:hover:not(:disabled) .btn-text { color: #e5e7eb !important; }
+
+/* ===== components/LanguageSwitcher.vue (4 rules) ===== */
+html.waiker-embed.waiker-dark .switcher-trigger { color: #e5e7eb !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .switcher-dropdown { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .switcher-option { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .switcher-option:hover { background: #243040 !important; }
+
+/* ===== components/Step1GraphBuild.vue (19 rules) ===== */
+html.waiker-embed.waiker-dark .workbench-panel { background-color: #1f2937 !important; }
+html.waiker-embed.waiker-dark .step-card { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .step-card.active .step-num,
+html.waiker-embed.waiker-dark .step-card.completed .step-num { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .badge.success { background: rgba(99,102,241,0.16) !important; }
+html.waiker-embed.waiker-dark .badge.pending { background: #243040 !important; }
+html.waiker-embed.waiker-dark .entity-tag { background: #243040 !important; border: 1px solid #374151 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .entity-tag.clickable:hover { background: #374151 !important; }
+html.waiker-embed.waiker-dark .ontology-detail-overlay { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .detail-header { border-bottom: 1px solid #374151 !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .close-btn:hover { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .detail-desc { color: #e5e7eb !important; border-bottom: 1px dashed #374151 !important; }
+html.waiker-embed.waiker-dark .attr-item { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .attr-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .attr-desc { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .example-tag { background: #1f2937 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .conn-item { background: #243040 !important; }
+html.waiker-embed.waiker-dark .conn-node { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .stats-grid { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .stat-value { color: #e5e7eb !important; }
+
+/* ===== components/Step1TopicSetup.vue (0 rules) ===== */
+
+
+/* ===== components/Step2EnvSetup.vue (81 rules) ===== */
+html.waiker-embed.waiker-dark .env-setup-panel { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .step-card { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .step-card.active .step-num,
+html.waiker-embed.waiker-dark .step-card.completed .step-num { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .badge.success { background: rgba(99,102,241,0.16) !important; }
+html.waiker-embed.waiker-dark .badge.pending { background: #243040 !important; }
+html.waiker-embed.waiker-dark .badge.accent { background: #243040 !important; }
+html.waiker-embed.waiker-dark .action-btn.primary { background: #243040 !important; }
+html.waiker-embed.waiker-dark .action-btn.secondary { background: #243040 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .action-btn.secondary:hover:not(:disabled) { background: #374151 !important; }
+html.waiker-embed.waiker-dark .info-card { background: #243040 !important; }
+html.waiker-embed.waiker-dark .info-row { border-bottom: 1px dashed #374151 !important; }
+html.waiker-embed.waiker-dark .stats-grid { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .stat-value { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .profiles-preview { border-top: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .profiles-list::-webkit-scrollbar-thumb { background: #4b5563 !important; }
+html.waiker-embed.waiker-dark .profile-card { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .profile-card:hover { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .profile-realname { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .profile-profession { background: #243040 !important; }
+html.waiker-embed.waiker-dark .profile-bio { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .topic-tag { background: #243040 !important; }
+html.waiker-embed.waiker-dark .config-block { border-top: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .config-block-badge { background: #243040 !important; }
+html.waiker-embed.waiker-dark .config-item { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .config-item-value { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .period-item { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .period-multiplier { background: #243040 !important; }
+html.waiker-embed.waiker-dark .agents-cards::-webkit-scrollbar-thumb { background: #4b5563 !important; }
+html.waiker-embed.waiker-dark .agent-card { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .agent-card:hover { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .agent-card-header { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .agent-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .agent-type { background: #243040 !important; }
+html.waiker-embed.waiker-dark .stance-neutral { background: #243040 !important; }
+html.waiker-embed.waiker-dark .mini-timeline { background: #243040 !important; }
+html.waiker-embed.waiker-dark .timeline-hour { background: #374151 !important; }
+html.waiker-embed.waiker-dark .platform-card { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .platform-card-header { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .platform-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .param-value { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .reasoning-item { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .reasoning-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .profile-modal { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .modal-header { background: #1f2937 !important; border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .modal-realname { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .modal-profession { color: #e5e7eb !important; background: #243040 !important; }
+html.waiker-embed.waiker-dark .close-btn:hover { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .info-value { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .section-bio { color: #e5e7eb !important; background: #1f2937 !important; border-left: 3px solid #374151 !important; }
+html.waiker-embed.waiker-dark .topic-item { background: #243040 !important; }
+html.waiker-embed.waiker-dark .topic-item:hover { background: #243040 !important; }
+html.waiker-embed.waiker-dark .dimension-card { background: #1f2937 !important; border-left: 3px solid #4b5563 !important; }
+html.waiker-embed.waiker-dark .dimension-card:hover { background: #243040 !important; }
+html.waiker-embed.waiker-dark .dim-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .persona-content::-webkit-scrollbar-thumb { background: #4b5563 !important; }
+html.waiker-embed.waiker-dark .section-persona { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .narrative-box { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .narrative-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .topics-section { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .initial-posts-section { border-top: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .posts-timeline { border-left: 2px solid #374151 !important; }
+html.waiker-embed.waiker-dark .timeline-marker { background: #4b5563 !important; }
+html.waiker-embed.waiker-dark .timeline-content { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .post-role { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .post-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .rounds-config-section { border-top: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .section-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .desc-highlight { color: #e5e7eb !important; background: #243040 !important; }
+html.waiker-embed.waiker-dark .switch-control:hover { background: #243040 !important; }
+html.waiker-embed.waiker-dark .switch-track { background: #374151 !important; }
+html.waiker-embed.waiker-dark .switch-track::after { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .switch-control input:checked + .switch-track { background: #243040 !important; }
+html.waiker-embed.waiker-dark .switch-control input:checked ~ .switch-label { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .val-num { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .slider-meta-info { background: #243040 !important; }
+html.waiker-embed.waiker-dark .minimal-slider { background: #374151 !important; }
+html.waiker-embed.waiker-dark .minimal-slider::-webkit-slider-thumb { background: #1f2937 !important; border: 2px solid #4b5563 !important; }
+html.waiker-embed.waiker-dark .mark-recommend:hover { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .mark-recommend.active { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .mark-recommend::after { background: #4b5563 !important; }
+html.waiker-embed.waiker-dark .auto-info-card { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .auto-value { border-right: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .duration-badge { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .highlight-tip { color: #e5e7eb !important; }
+
+/* ===== components/Step3Simulation.vue (33 rules) ===== */
+html.waiker-embed.waiker-dark .simulation-panel { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .control-bar { background: #1f2937 !important; border-bottom-color: #374151 !important; }
+html.waiker-embed.waiker-dark .platform-status { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .platform-status.active { border-color: #e5e7eb !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .tooltip-title { color: #999 !important; }
+html.waiker-embed.waiker-dark .platform-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .platform-status.twitter .platform-icon { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .platform-status.reddit .platform-icon { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .stat-value { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .action-btn.primary:hover:not(:disabled) { background: #374151 !important; }
+html.waiker-embed.waiker-dark .main-content-area { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .timeline-header { background: rgba(31, 41, 55, 0.9) !important; border-bottom-color: #374151 !important; }
+html.waiker-embed.waiker-dark .timeline-stats { background: #243040 !important; }
+html.waiker-embed.waiker-dark .total-count { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .breakdown-item.twitter { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .breakdown-item.reddit { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .timeline-axis { background: #374151 !important; }
+html.waiker-embed.waiker-dark .timeline-marker { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .timeline-item.twitter .marker-dot { background: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .timeline-item.reddit .marker-dot { background: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .timeline-item.twitter .timeline-marker { border-color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .timeline-item.reddit .timeline-marker { border-color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .timeline-card { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .card-header { border-bottom-color: #243040 !important; }
+html.waiker-embed.waiker-dark .avatar-placeholder { background: #243040 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .agent-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .badge-post { background: #243040 !important; color: #e5e7eb !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .badge-comment { background: #243040 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .badge-action { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .badge-meta { background: #1f2937 !important; border-color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .content-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .content-text.main-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .quoted-block, html.waiker-embed.waiker-dark .repost-content { background: #1f2937 !important; border-color: #374151 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .search-query { background: #243040 !important; }
+
+/* ===== components/Step4Report.vue (96 rules) ===== */
+html.waiker-embed.waiker-dark .report-panel { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .panel-header { background: #1f2937 !important; border-bottom: 1px solid #374151 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .header-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .panel-header--active { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .panel-header--done { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .left-panel.report-style { background: #1f2937 !important; border-right: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .report-tag { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .main-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .header-divider { background: #374151 !important; }
+html.waiker-embed.waiker-dark .section-header-row.clickable:hover { background-color: #1f2937 !important; }
+html.waiker-embed.waiker-dark .section-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .report-section-item.is-pending .section-title { color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .report-section-item.is-active .section-title,
+html.waiker-embed.waiker-dark .report-section-item.is-completed .section-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .generated-content { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .generated-content .md-h2,
+html.waiker-embed.waiker-dark .generated-content .md-h3,
+html.waiker-embed.waiker-dark .generated-content .md-h4 { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .generated-content .md-h2 { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .generated-content .md-quote { border-left: 3px solid #374151 !important; }
+html.waiker-embed.waiker-dark .generated-content .code-block { background: #243040 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .generated-content strong { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .loading-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .right-panel { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .metric-value { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .metric-pill { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .metric-pill.pill--completed { background: rgba(99,102,241,0.16) !important; }
+html.waiker-embed.waiker-dark .wf-step { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .wf-step-dot { border: 2px solid #1f2937 !important; }
+html.waiker-embed.waiker-dark .wf-step-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .timeline-item { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .timeline-item:hover { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .action-label { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .timeline-body { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .timeline-footer { border-top: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .elapsed-badge { background: #243040 !important; }
+html.waiker-embed.waiker-dark .info-val { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .status-message.success { background: rgba(99,102,241,0.16) !important; }
+html.waiker-embed.waiker-dark .outline-badge { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .section-tag { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .section-tag.completed { background: rgba(99,102,241,0.16) !important; }
+html.waiker-embed.waiker-dark .tag-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .tool-badge { background: #1f2937 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .tool-badge.tool-gray { background: #1f2937 !important; border-color: #4b5563 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .tool-params pre { color: #e5e7eb !important; background: #243040 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .action-btn { background: #243040 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .action-btn:hover { background: #374151 !important; color: #e5e7eb !important; border-color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .result-tool { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .result-raw pre { color: #e5e7eb !important; background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .meta-tag { background: #243040 !important; }
+html.waiker-embed.waiker-dark .final-answer-hint { background: rgba(99,102,241,0.16) !important; }
+html.waiker-embed.waiker-dark .llm-content pre { color: #e5e7eb !important; background: #243040 !important; }
+html.waiker-embed.waiker-dark .complete-banner { background: rgba(99,102,241,0.16) !important; }
+html.waiker-embed.waiker-dark .next-step-btn { background: #374151 !important; }
+html.waiker-embed.waiker-dark .empty-pulse { background: #374151 !important; }
+html.waiker-embed.waiker-dark .stat-box { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .stat-box .stat-num { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .stat-box.highlight { background: rgba(99,102,241,0.16) !important; }
+html.waiker-embed.waiker-dark .stat-box.muted { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .query-display { background: #1f2937 !important; color: #e5e7eb !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .expand-details { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .expand-details:hover { border-color: #4b5563 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .detail-content { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .section-label { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .fact-row { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .fact-row.active { background: rgba(99,102,241,0.16) !important; }
+html.waiker-embed.waiker-dark .fact-idx { background: #243040 !important; }
+html.waiker-embed.waiker-dark .fact-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .entity-chip { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .chip-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .chip-type { background: #374151 !important; }
+html.waiker-embed.waiker-dark .relation-row { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .rel-node { color: #e5e7eb !important; background: #243040 !important; }
+html.waiker-embed.waiker-dark .interview-display .header-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .interview-display .stat-divider { color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .interview-display .agent-tabs { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .interview-display .agent-tabs::-webkit-scrollbar-thumb { background: #374151 !important; }
+html.waiker-embed.waiker-dark .interview-display .agent-tabs::-webkit-scrollbar-thumb:hover { background: #4b5563 !important; }
+html.waiker-embed.waiker-dark .interview-display .agent-tab { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .interview-display .agent-tab:hover { background: #243040 !important; border-color: #4b5563 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .interview-display .tab-avatar { background: #374151 !important; }
+html.waiker-embed.waiker-dark .interview-display .agent-tab:hover .tab-avatar { background: #4b5563 !important; }
+html.waiker-embed.waiker-dark .interview-display .profile-avatar { background: #374151 !important; }
+html.waiker-embed.waiker-dark .interview-display .profile-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .interview-display .selection-reason { background: #243040 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .interview-display .qa-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .interview-display .q-badge { border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .interview-display .answer-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .interview-display .answer-text strong { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .interview-display .expand-answer-btn { border-bottom: 1px dotted #4b5563 !important; }
+html.waiker-embed.waiker-dark .interview-display .quotes-section { border-top: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .interview-display .quote-item { background: #1f2937 !important; border: 1px solid #374151 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .interview-display .summary-section { border-top: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .interview-display .summary-content { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .interview-display .summary-content h2,
+html.waiker-embed.waiker-dark .interview-display .summary-content h3,
+html.waiker-embed.waiker-dark .interview-display .summary-content h4,
+html.waiker-embed.waiker-dark .interview-display .summary-content h5 { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .interview-display .summary-content strong { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .interview-display .summary-content blockquote { border-left: 3px solid #374151 !important; }
+html.waiker-embed.waiker-dark .interview-display .quote-item strong { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .insight-tabs { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .insight-tab:hover { background: #243040 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .insight-tab.active { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .insight-content { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .insight-display .panel-header { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .insight-display .panel-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .insight-display .fact-item { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .insight-display .fact-number { background: #374151 !important; }
+html.waiker-embed.waiker-dark .insight-display .fact-content { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .insight-display .entity-tag { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .insight-display .entity-tag:hover { background: #243040 !important; border-color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .insight-display .entity-tag .entity-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .insight-display .entity-card { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .insight-display .entity-card .entity-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .insight-display .entity-card .entity-fact-count { background: #243040 !important; }
+html.waiker-embed.waiker-dark .insight-display .entity-summary { border-top: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .insight-display .relation-item { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .insight-display .rel-source,
+html.waiker-embed.waiker-dark .insight-display .rel-target { background: #1f2937 !important; border: 1px solid #4b5563 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .insight-display .rel-line { background: #4b5563 !important; }
+html.waiker-embed.waiker-dark .insight-display .subquery-item { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .insight-display .subquery-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .insight-display .expand-btn,
+html.waiker-embed.waiker-dark .panorama-display .expand-btn,
+html.waiker-embed.waiker-dark .quick-search-display .expand-btn { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .insight-display .expand-btn:hover,
+html.waiker-embed.waiker-dark .panorama-display .expand-btn:hover,
+html.waiker-embed.waiker-dark .quick-search-display .expand-btn:hover { background: #243040 !important; color: #e5e7eb !important; border-color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .panorama-tabs { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .panorama-tab:hover { background: #243040 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .panorama-tab.active { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .panorama-content { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .panorama-display .panel-header { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .panorama-display .panel-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .panorama-display .fact-item { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .panorama-display .fact-item.active { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .panorama-display .fact-item.historical { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .panorama-display .fact-number { background: #374151 !important; }
+html.waiker-embed.waiker-dark .panorama-display .fact-item.active .fact-number { background: #374151 !important; }
+html.waiker-embed.waiker-dark .panorama-display .fact-content { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .panorama-display .entity-tag { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .panorama-display .entity-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .quicksearch-tabs { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .quicksearch-tab:hover { background: #243040 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .quicksearch-tab.active { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .quicksearch-content { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .quick-search-display .panel-header { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .quick-search-display .panel-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .quick-search-display .fact-item { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .quick-search-display .fact-item.active { background: #1f2937 !important; border-color: #374151 !important; }
+html.waiker-embed.waiker-dark .quick-search-display .fact-number { background: #374151 !important; }
+html.waiker-embed.waiker-dark .quick-search-display .fact-item.active .fact-number { background: #374151 !important; }
+html.waiker-embed.waiker-dark .quick-search-display .fact-content { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .quick-search-display .edge-item { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .quick-search-display .edge-source,
+html.waiker-embed.waiker-dark .quick-search-display .edge-target { background: #1f2937 !important; border: 1px solid #4b5563 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .quick-search-display .edge-line { background: #4b5563 !important; }
+html.waiker-embed.waiker-dark .quick-search-display .node-tag { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .quick-search-display .node-name { color: #e5e7eb !important; }
+
+/* ===== components/Step5Interaction.vue (59 rules) ===== */
+html.waiker-embed.waiker-dark .interaction-panel { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .left-panel.report-style { background: #1f2937 !important; border-right: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .main-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .header-divider { background: #374151 !important; }
+html.waiker-embed.waiker-dark .section-header-row.clickable:hover { background-color: #243040 !important; }
+html.waiker-embed.waiker-dark .section-number { color: #374151 !important; }
+html.waiker-embed.waiker-dark .section-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .report-section-item.is-pending .section-number { color: #374151 !important; }
+html.waiker-embed.waiker-dark .report-section-item.is-pending .section-title { color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .report-section-item.is-active .section-title,
+html.waiker-embed.waiker-dark .report-section-item.is-completed .section-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .generated-content { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .md-h2,
+html.waiker-embed.waiker-dark .md-h3,
+html.waiker-embed.waiker-dark .md-h4 { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .md-h2 { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .md-quote { border-left: 3px solid #374151 !important; }
+html.waiker-embed.waiker-dark .code-block { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .generated-content strong { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .loading-text { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .right-panel { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .action-bar { border-bottom: 1px solid #374151 !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .action-bar-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .tab-pill { background: #243040 !important; }
+html.waiker-embed.waiker-dark .tab-pill:hover { background: #374151 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .tab-divider { background: #374151 !important; }
+html.waiker-embed.waiker-dark .interaction-header { border-bottom: 1px solid #374151 !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .tab-btn { border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .tab-btn:hover { background: #243040 !important; border-color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .report-agent-tools-card { border-bottom: 1px solid #374151 !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .tools-card-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .tools-card-toggle { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .tools-card-toggle:hover { background: #243040 !important; border-color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .tool-item { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .tool-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .agent-profile-card { border-bottom: 1px solid #374151 !important; background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .profile-card-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .profile-card-profession { background: #374151 !important; }
+html.waiker-embed.waiker-dark .profile-card-toggle { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .profile-card-toggle:hover { background: #243040 !important; border-color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .profile-card-bio { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .profile-card-bio p { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .target-selector { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .target-option { color: #e5e7eb !important; background: #243040 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .target-option:hover { border-color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .dropdown-menu { background: #1f2937 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .dropdown-header { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .dropdown-item:hover { background: #243040 !important; }
+html.waiker-embed.waiker-dark .agent-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .chat-message.assistant .message-avatar { background: #243040 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .sender-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .chat-message.assistant .message-text { background: #243040 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .md-oli::before { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .typing-indicator { background: #243040 !important; }
+html.waiker-embed.waiker-dark .chat-input-area { border-top: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .chat-input { border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .chat-input:disabled { background: #243040 !important; }
+html.waiker-embed.waiker-dark .send-btn:disabled { background: #374151 !important; }
+html.waiker-embed.waiker-dark .survey-setup { border-bottom: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .setup-section .section-header .section-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .agent-checkbox { background: #243040 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .agent-checkbox:hover { border-color: #4b5563 !important; }
+html.waiker-embed.waiker-dark .checkbox-avatar { background: #374151 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .checkbox-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .checkbox-indicator { border: 2px solid #374151 !important; }
+html.waiker-embed.waiker-dark .action-divider { color: #374151 !important; }
+html.waiker-embed.waiker-dark .survey-input { border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .survey-submit-btn:disabled { background: #374151 !important; }
+html.waiker-embed.waiker-dark .results-title { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .result-card { background: #243040 !important; border: 1px solid #374151 !important; }
+html.waiker-embed.waiker-dark .result-name { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .result-question { background: #1f2937 !important; }
+html.waiker-embed.waiker-dark .result-answer { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .md-h2 { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .md-h3 { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .md-h4 { color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .chat-messages .md-quote,
+html.waiker-embed.waiker-dark .result-answer .md-quote { background: #243040 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .inline-code { background: #243040 !important; color: #e5e7eb !important; }
+html.waiker-embed.waiker-dark .md-hr { border-top: 1px solid #374151 !important; }
+
