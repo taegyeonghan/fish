@@ -3,12 +3,21 @@ UngdrooFish Backend - Flask Application Factory
 """
 
 import os
+import mimetypes
 import warnings
+
+# Windows 레지스트리가 .js 를 text/plain 으로 등록한 경우 ES module 스크립트 실행이 거부된다.
+# Flask send_from_directory(=mimetypes.guess_type)가 올바른 MIME 을 반환하도록 강제 등록.
+mimetypes.add_type('text/javascript', '.js')
+mimetypes.add_type('text/javascript', '.mjs')
+mimetypes.add_type('text/css', '.css')
+mimetypes.add_type('application/json', '.json')
+mimetypes.add_type('image/svg+xml', '.svg')
 
 # suppress multiprocessing resource_tracker warnings from third-party libs (e.g. transformers)
 warnings.filterwarnings("ignore", message=".*resource_tracker.*")
 
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 from flask_cors import CORS
 
 from .config import Config
@@ -70,7 +79,30 @@ def create_app(config_class=Config):
     def health():
         return {'status': 'ok', 'service': 'UngdrooFish Backend'}
 
+    # built Vue SPA serving (collapses the frontend into this one process)
+    # dist 경로: backend/app/__init__.py -> ../../frontend/dist
+    frontend_dist = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'dist')
+    )
+
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve_spa(path):
+        # /api/*, /health 는 위 블루프린트/라우트가 우선 매칭되므로 여기 도달하지 않음.
+        # 정적 파일이 있으면 그 파일을, 없으면 SPA fallback 으로 index.html (createWebHistory 딥링크 대응).
+        if not os.path.isdir(frontend_dist):
+            return (
+                'UngdrooFish frontend dist not found. '
+                'Run `npm run build` in gemstone-forecast-sim/frontend.',
+                503,
+            )
+        candidate = os.path.join(frontend_dist, path)
+        if path and os.path.isfile(candidate):
+            return send_from_directory(frontend_dist, path)
+        return send_from_directory(frontend_dist, 'index.html')
+
     if should_log_startup:
         logger.info("UngdrooFish Backend started successfully")
+        logger.info(f"Serving frontend dist from: {frontend_dist}")
 
     return app
