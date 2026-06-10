@@ -45,7 +45,8 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  // /fish 같은 서브경로 마운트 대응: 빌드 base(import.meta.env.BASE_URL)를 router base 로 사용
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
 
