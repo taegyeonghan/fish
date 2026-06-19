@@ -5,9 +5,11 @@ LLM 기반 엔티티/관계 추출
 """
 
 import json
+import re
 import uuid
 import time
 import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass
 
@@ -50,9 +52,28 @@ Rules:
 - Only use entity types and relation types defined in the ontology.
 - If no matching type exists, use "Entity" as a fallback entity type.
 - Entity names should be normalized (consistent casing, no duplicates).
-- Extract ALL meaningful entities and relationships from the text.
+- Extract concrete, real-world entities that are EXPLICITLY NAMED in the text:
+  specific companies, people, securities/tickers, market indices, sectors/industries,
+  economic indicators, named events, organizations, products, places, instruments.
 - Keep summaries concise but informative.
 - The "fact" field should describe the relationship in natural language.
+
+DO NOT extract (these produce meaningless nodes):
+- Abstract concepts, methodologies, models, strategies, or the analysis/prediction
+  task itself (e.g. "prediction model", "investment strategy", "the analysis",
+  "복합 투자 예측 모델", "수익률 예측 모델"). These describe the task, not the world.
+- Generic role descriptions with no concrete named referent. If the text mentions a
+  concept only generically (no specific name), SKIP it — do not invent a node for it.
+- Document scaffolding / metadata. IGNORE lines and headers such as the prediction
+  question, "Prediction question", "Selected local sources", "Auto-collected source",
+  "Source type", "Path", "Relevance score", section dividers (===), and file names.
+- Prefer specific named instances (e.g. "NVIDIA", "CPI", "FOMC") over generic
+  categories (e.g. "a tech company", "an indicator", "a meeting").
+
+Be selective — do NOT exhaustively extract every minor mention:
+- Return only the MOST IMPORTANT entities central to this chunk, at most 8.
+- Skip incidental, trivial, or one-off mentions that are not central to the meaning.
+- Only emit a relationship when BOTH endpoints are among the entities you extracted.
 """
 
 
@@ -355,94 +376,219 @@ class GraphBuilderService:
             progress_callback: 진행률 콜백 함수
         """
         total_chunks = len(chunks)
+        if total_chunks == 0:
+            return
         ontology_desc = self._build_ontology_description(ontology)
 
-        # 이미 추가된 노드를 이름으로 추적 (중복 방지)
-        node_name_map: Dict[str, str] = {}  # name -> uuid
+        # 온톨로지 사후 검증용 허용 집합
+        allowed_entity_types = {
+            e["name"] for e in ontology.get("entity_types", []) if e.get("name")
+        }
+        allowed_edge_types = {
+            e["name"] for e in ontology.get("edge_types", []) if e.get("name")
+        }
+        GROUNDABLE_LABELS = {"Stock", "Organization"}
 
-        for i, chunk in enumerate(chunks):
-            batch_num = i // batch_size + 1
-            total_batches = (total_chunks + batch_size - 1) // batch_size
+        # 메타/추상 엔티티 차단 패턴 (캐시된 온톨로지에도 강제 적용)
+        try:
+            blocked_re = re.compile(Config.BLOCKED_ENTITY_PATTERN)
+        except re.error:
+            blocked_re = None
+        blocked_count = 0
 
-            if progress_callback:
-                progress = (i + 1) / total_chunks
-                progress_callback(
-                    t('progress.sendingBatch', current=batch_num, total=total_batches, chunks=min(batch_size, total_chunks - i)),
-                    progress
-                )
+        logger.info(
+            f"[graph_build] chunks={total_chunks}, workers={max(1, min(Config.GRAPH_BUILD_MAX_WORKERS, total_chunks))}, "
+            f"max_nodes={Config.MAX_GRAPH_NODES}, meta_block={'on' if blocked_re else 'off'}, "
+            f"grounding={Config.GROUND_ENTITIES_WITH_MCP}"
+        )
 
-            # 에피소드 기록
-            ep_uuid = self.graph_store.add_episode(graph_id, chunk)
-
-            # LLM으로 엔티티/관계 추출
-            extraction = self._extract_entities_from_chunk(chunk, ontology_desc)
-
-            # 엔티티 추가
-            for entity in extraction.get("entities", []):
-                entity_name = entity.get("name", "").strip()
-                if not entity_name:
-                    continue
-
-                entity_type = entity.get("type", "Entity")
-                summary = entity.get("summary", "")
-                attributes = entity.get("attributes", {})
-
-                # 기존 노드가 있으면 스킵 (이름 기준 중복 방지)
-                if entity_name in node_name_map:
-                    continue
-
-                node_uuid = self.graph_store.add_node(
-                    graph_id=graph_id,
-                    name=entity_name,
-                    labels=[entity_type],
-                    summary=summary,
-                    attributes=attributes
-                )
-                node_name_map[entity_name] = node_uuid
-
-            # 관계 추가
-            for relation in extraction.get("relations", []):
-                source_name = relation.get("source", "").strip()
-                target_name = relation.get("target", "").strip()
-                relation_type = relation.get("relation_type", "RELATED_TO")
-                fact = relation.get("fact", "")
-
-                if not source_name or not target_name:
-                    continue
-
-                # 소스/타겟 노드가 없으면 자동 생성
-                if source_name not in node_name_map:
-                    src_uuid = self.graph_store.add_node(
-                        graph_id=graph_id,
-                        name=source_name,
-                        labels=["Entity"]
+        # ===== Phase 1: 청크별 LLM 추출을 병렬 실행 (가장 느린 부분) =====
+        extractions: List[Optional[Dict[str, Any]]] = [None] * total_chunks
+        max_workers = max(1, min(Config.GRAPH_BUILD_MAX_WORKERS, total_chunks))
+        completed = 0
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_idx = {
+                executor.submit(self._extract_entities_from_chunk, chunk, ontology_desc): idx
+                for idx, chunk in enumerate(chunks)
+            }
+            for future in as_completed(future_to_idx):
+                idx = future_to_idx[future]
+                try:
+                    extractions[idx] = future.result()
+                except Exception as e:
+                    logger.error(f"청크 {idx} 추출 실패: {type(e).__name__}: {str(e)[:150]}")
+                    extractions[idx] = {"entities": [], "relations": []}
+                completed += 1
+                if progress_callback:
+                    # 추출이 전체의 85%를 차지, 나머지는 그래프 적재
+                    progress_callback(
+                        t('progress.sendingBatch', current=completed, total=total_chunks, chunks=1),
+                        (completed / total_chunks) * 0.85
                     )
-                    node_name_map[source_name] = src_uuid
 
-                if target_name not in node_name_map:
-                    tgt_uuid = self.graph_store.add_node(
-                        graph_id=graph_id,
-                        name=target_name,
-                        labels=["Entity"]
+        # ===== Phase 2: 순차 적재 (dedup·해소·상한·검증·grounding) =====
+        # SQLite 쓰기는 단일 스레드로 유지해 락/순서 충돌 방지
+        node_name_map: Dict[str, str] = {}  # 정규화된 이름 -> uuid
+
+        grounder = None
+        if Config.GROUND_ENTITIES_WITH_MCP:
+            try:
+                from .mcp_client import GemstoneClient
+                grounder = GemstoneClient()
+            except Exception as e:
+                logger.warning(f"MCP grounding 비활성(클라이언트 생성 실패): {e}")
+
+        def _norm(name: str) -> str:
+            return name.strip().casefold()
+
+        try:
+            for i, extraction in enumerate(extractions):
+                if not extraction:
+                    continue
+
+                ep_uuid = self.graph_store.add_episode(graph_id, chunks[i])
+
+                entities_added_this_chunk = 0
+                for entity in extraction.get("entities", []):
+                    if len(node_name_map) >= Config.MAX_GRAPH_NODES:
+                        break
+                    if entities_added_this_chunk >= Config.MAX_ENTITIES_PER_CHUNK:
+                        break
+
+                    entity_name = entity.get("name", "").strip()
+                    if not entity_name:
+                        continue
+                    key = _norm(entity_name)
+                    if key in node_name_map:
+                        continue
+
+                    entity_type = entity.get("type", "Entity")
+
+                    # 메타/추상 노드(모델·리포트·예측 과업 등)는 타입·이름 어느 쪽이든
+                    # 패턴에 걸리면 통째로 버린다. → 캐시된 온톨로지에도 적용됨
+                    if blocked_re is not None and (
+                        blocked_re.search(entity_type) or blocked_re.search(entity_name)
+                    ):
+                        blocked_count += 1
+                        continue
+
+                    # 온톨로지에 없는 타입은 Entity로 강등
+                    if allowed_entity_types and entity_type not in allowed_entity_types:
+                        entity_type = "Entity"
+                    summary = entity.get("summary", "")
+                    attributes = entity.get("attributes", {}) or {}
+
+                    # 엔티티 해소: 기존 노드와 임베딩 유사도가 높으면 병합
+                    resolve_text = f"{entity_name}. {summary}" if summary else entity_name
+                    existing_uuid = self.graph_store.find_similar_node_uuid(
+                        graph_id,
+                        resolve_text,
+                        threshold=Config.ENTITY_RESOLUTION_THRESHOLD,
+                        allowed_labels=[entity_type] if entity_type != "Entity" else None,
                     )
-                    node_name_map[target_name] = tgt_uuid
+                    if existing_uuid:
+                        node_name_map[key] = existing_uuid
+                        continue
 
-                self.graph_store.add_edge(
-                    graph_id=graph_id,
-                    name=relation_type,
-                    source_uuid=node_name_map[source_name],
-                    target_uuid=node_name_map[target_name],
-                    fact=fact
-                )
+                    # gemstone MCP grounding (종목/기업)
+                    if grounder is not None and entity_type in GROUNDABLE_LABELS:
+                        try:
+                            ground = self._ground_entity(grounder, entity_name)
+                            if ground:
+                                attributes.update(ground)
+                        except Exception as e:
+                            logger.debug(f"grounding 실패({entity_name}): {e}")
 
-            # 에피소드 처리 완료 표시
-            self.graph_store.mark_episode_processed(ep_uuid)
+                    entities_added_this_chunk += 1
+                    node_uuid = self.graph_store.add_node(
+                        graph_id=graph_id,
+                        name=entity_name,
+                        labels=[entity_type],
+                        summary=summary,
+                        attributes=attributes
+                    )
+                    node_name_map[key] = node_uuid
+
+                # 관계 추가
+                for relation in extraction.get("relations", []):
+                    source_name = relation.get("source", "").strip()
+                    target_name = relation.get("target", "").strip()
+                    relation_type = relation.get("relation_type", "RELATED_TO")
+                    fact = relation.get("fact", "")
+
+                    if not source_name or not target_name:
+                        continue
+
+                    s_key, t_key = _norm(source_name), _norm(target_name)
+                    # 끝점이 실제로 추출된 엔티티가 아니면 관계를 버린다.
+                    # (예전엔 빈 "Entity" 노드를 자동 생성해 잡노드를 양산했음)
+                    if s_key not in node_name_map or t_key not in node_name_map:
+                        continue
+
+                    # 온톨로지에 없는 관계 타입은 RELATED_TO로 매핑
+                    if allowed_edge_types and relation_type not in allowed_edge_types:
+                        relation_type = "RELATED_TO"
+
+                    self.graph_store.add_edge(
+                        graph_id=graph_id,
+                        name=relation_type,
+                        source_uuid=node_name_map[s_key],
+                        target_uuid=node_name_map[t_key],
+                        fact=fact
+                    )
+
+                self.graph_store.mark_episode_processed(ep_uuid)
+        finally:
+            if grounder is not None:
+                try:
+                    grounder.close()
+                except Exception:
+                    pass
+
+        logger.info(
+            f"[graph_build] 적재 완료: nodes={len(node_name_map)}, blocked_meta={blocked_count}"
+        )
 
         if progress_callback:
             progress_callback(
                 t('progress.processingComplete', completed=total_chunks, total=total_chunks),
                 1.0
             )
+
+    def _ground_entity(self, grounder, name: str) -> Optional[Dict[str, str]]:
+        """
+        gemstone MCP code-search로 종목/기업명을 실제 식별자에 매칭.
+        성공 시 {ticker, region, matched_name} 일부를 attributes로 반환.
+        응답 스키마가 유동적이므로 방어적으로 파싱한다.
+        """
+        res = grounder.code_search(name, search_type="ticker")
+
+        items = None
+        if isinstance(res, dict):
+            if res.get("error"):
+                return None
+            items = res.get("data") or res.get("results") or res.get("items")
+            if items is None and ("ticker" in res or "code" in res):
+                items = [res]
+        elif isinstance(res, list):
+            items = res
+
+        if not items or not isinstance(items, list):
+            return None
+        first = items[0]
+        if not isinstance(first, dict):
+            return None
+
+        out: Dict[str, str] = {}
+        for src_key, dst_key in (
+            ("ticker", "ticker"), ("code", "ticker"),
+            ("region", "region"), ("country", "region"),
+            ("name", "matched_name"), ("name_kr", "matched_name"),
+        ):
+            val = first.get(src_key)
+            if val and dst_key not in out:
+                out[dst_key] = str(val)
+        return out or None
 
     def _get_graph_info(self, graph_id: str) -> GraphInfo:
         """그래프 정보 조회"""

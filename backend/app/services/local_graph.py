@@ -75,13 +75,14 @@ class EmbeddingService:
 
     def _ensure_initialized(self):
         if not self._initialized:
+            model_name = Config.EMBEDDING_MODEL
             try:
                 from sentence_transformers import SentenceTransformer
-                self._model = SentenceTransformer('all-MiniLM-L6-v2')
+                self._model = SentenceTransformer(model_name)
                 self._initialized = True
-                logger.info("임베딩 모델 로드 완료: all-MiniLM-L6-v2")
+                logger.info(f"임베딩 모델 로드 완료: {model_name}")
             except Exception as e:
-                logger.error(f"임베딩 모델 로드 실패: {e}")
+                logger.error(f"임베딩 모델 로드 실패({model_name}): {e}")
                 self._model = None
                 self._initialized = True
 
@@ -89,7 +90,7 @@ class EmbeddingService:
         """텍스트 리스트를 임베딩 벡터로 변환"""
         self._ensure_initialized()
         if self._model is None:
-            return np.zeros((len(texts), 384))
+            return np.zeros((len(texts), Config.EMBEDDING_DIM))
         return self._model.encode(texts, normalize_embeddings=True)
 
     def encode_single(self, text: str) -> np.ndarray:
@@ -112,6 +113,9 @@ class LocalGraphStore:
     def _init_db(self):
         """SQLite 테이블 초기화"""
         with sqlite3.connect(self.db_path) as conn:
+            # WAL: 읽기-쓰기 동시성 향상 (백그라운드 빌드 스레드 + 조회 동시 처리)
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS graphs (
                     graph_id TEXT PRIMARY KEY,
@@ -259,6 +263,46 @@ class LocalGraphStore:
         g.add_node(node_uuid, name=name, labels=labels, summary=summary, attributes=attributes)
 
         return node_uuid
+
+    def find_similar_node_uuid(self, graph_id: str, text: str,
+                               threshold: float = 0.90,
+                               allowed_labels: Optional[List[str]] = None) -> Optional[str]:
+        """
+        엔티티 해소: 주어진 텍스트(이름+요약)와 임베딩 코사인 유사도가 threshold 이상인
+        기존 노드의 uuid를 반환. allowed_labels가 주어지면 해당 라벨을 가진 노드로 제한.
+        없으면 None.
+        """
+        if not text.strip():
+            return None
+        query_emb = self._embedding_service.encode_single(text)
+        # 임베딩 모델 미로드 시(zeros) 의미 없는 매칭 방지
+        if not np.any(query_emb):
+            return None
+
+        allowed_set = {l.lower() for l in allowed_labels} if allowed_labels else None
+        best_uuid, best_score = None, -1.0
+
+        with sqlite3.connect(self.db_path) as conn:
+            rows = conn.execute(
+                "SELECT uuid, labels_json, embedding FROM nodes WHERE graph_id = ?",
+                (graph_id,)
+            ).fetchall()
+
+        for node_uuid, labels_json, emb_blob in rows:
+            if not emb_blob:
+                continue
+            if allowed_set:
+                labels = {l.lower() for l in json.loads(labels_json)}
+                if not (labels & allowed_set):
+                    continue
+            node_emb = np.frombuffer(emb_blob, dtype=np.float32)
+            if node_emb.shape != query_emb.shape:
+                continue
+            score = float(np.dot(query_emb, node_emb))
+            if score > best_score:
+                best_uuid, best_score = node_uuid, score
+
+        return best_uuid if best_score >= threshold else None
 
     def add_edge(self, graph_id: str, name: str, source_uuid: str, target_uuid: str,
                  fact: str = "", attributes: Dict = None) -> str:

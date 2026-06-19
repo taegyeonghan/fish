@@ -166,14 +166,12 @@ def generate_ontology():
             return _err(t('api.requireSimulationRequirement'), "missing_simulation_requirement", 400)
         
         uploaded_files = request.files.getlist('files')
-        uploaded_files = request.files.getlist('files')
         has_uploaded_files = any(f and f.filename for f in uploaded_files)
         
         project = ProjectManager.create_project(name=project_name)
         project.simulation_requirement = simulation_requirement
         logger.info(f": {project.project_id}")
         
-        document_texts = []
         document_texts = []
         all_text = ""
         

@@ -64,14 +64,9 @@ class CollectedDocument:
         }
 
     def to_seed_text(self) -> str:
-        score = round(self.score, 4)
-        return (
-            f"=== Auto-collected source: {self.title} ===\n"
-            f"Source type: {self.source_type}\n"
-            f"Path: {self.path}\n"
-            f"Relevance score: {score}\n\n"
-            f"{self.text}"
-        )
+        # 스캐폴딩 메타(Source type/Path/Relevance score/제목)는 본문에 넣지 않는다.
+        # 그래프 빌드 시 이 메타가 엔티티로 오추출되는 것을 방지. 출처는 to_project_file에 보존됨.
+        return self.text
 
 
 def collect_related_documents(
@@ -112,28 +107,19 @@ def collect_related_documents(
 
 
 def format_collected_documents(question: str, documents: Sequence[CollectedDocument]) -> str:
-    lines = [
-        "=== Prediction question ===",
-        question.strip(),
-        "",
-        "=== Selected local sources ===",
-    ]
-
-    for idx, doc in enumerate(documents, 1):
-        lines.append(
-            f"{idx}. {doc.title} "
-            f"(source={doc.source_type}, score={round(doc.score, 4)}, path={doc.path})"
-        )
-
-    lines.append("")
-    lines.extend(doc.to_seed_text() for doc in documents)
-    return "\n\n".join(lines)
+    # 그래프 빌드에 쓰이는 본문이므로 질문/소스목록/메타는 넣지 않는다.
+    # (질문은 온톨로지 생성에 simulation_requirement로 별도 전달되며,
+    #  여기에 섞으면 "예측 과업" 자체가 엔티티로 채굴되어 메타 노드가 생김)
+    return "\n\n---\n\n".join(doc.to_seed_text() for doc in documents)
 
 
 def _load_candidates(query: str) -> List[Dict[str, object]]:
     raw_candidates = []
     raw_candidates.extend(_load_data_documents())
-    raw_candidates.extend(_load_previous_project_documents())
+    # 이전 프로젝트의 추출 텍스트를 끌어오면 무관한 옛 내용이 새 프로젝트로 오염됨.
+    # 기본 비활성 (필요 시 AUTO_COLLECT_PREVIOUS_PROJECTS=true).
+    if getattr(Config, "AUTO_COLLECT_PREVIOUS_PROJECTS", False):
+        raw_candidates.extend(_load_previous_project_documents())
     if not raw_candidates and query.strip():
         raw_candidates.extend(_load_web_documents(query))
 
