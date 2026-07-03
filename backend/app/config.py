@@ -69,16 +69,24 @@ class Config:
 
     # 텍스트 처리 설정
     # 청크가 너무 작으면 청크 수가 늘어 추출 호출이 많아지고 노드가 과도하게 양산됨.
-    DEFAULT_CHUNK_SIZE = 1200
-    DEFAULT_CHUNK_OVERLAP = 100
+    # 호출당 시스템프롬프트+온톨로지 설명이 고정비로 붙으므로 청크를 키울수록 총 토큰이 준다.
+    DEFAULT_CHUNK_SIZE = int(os.environ.get('DEFAULT_CHUNK_SIZE', '2500'))
+    DEFAULT_CHUNK_OVERLAP = int(os.environ.get('DEFAULT_CHUNK_OVERLAP', '150'))
 
     # 그래프 노드 상한 (이상치 방지 — 이 수를 넘으면 추가 추출을 멈춤)
     MAX_GRAPH_NODES = int(os.environ.get('MAX_GRAPH_NODES', '120'))
     # 청크당 추출 엔티티 상한 (가장 핵심적인 대상만)
-    MAX_ENTITIES_PER_CHUNK = int(os.environ.get('MAX_ENTITIES_PER_CHUNK', '8'))
+    MAX_ENTITIES_PER_CHUNK = int(os.environ.get('MAX_ENTITIES_PER_CHUNK', '6'))
+    # 그래프 빌드 시 LLM 추출을 수행할 최대 청크 수 — 노드 상한이 초반 청크에서
+    # 이미 차는 긴 문서에서 잔여 청크 추출(결과가 통째로 버려짐)을 막는다. 0 이하 = 무제한.
+    MAX_EXTRACTION_CHUNKS = int(os.environ.get('MAX_EXTRACTION_CHUNKS', '60'))
 
     # OASIS 시뮬레이션 설정
     OASIS_DEFAULT_MAX_ROUNDS = int(os.environ.get('OASIS_DEFAULT_MAX_ROUNDS', '10'))
+    # 시뮬레이션 에이전트 수 상한 — 필터된 엔티티가 이보다 많으면 그래프 연결도(degree)
+    # 상위 순으로 선별. 프로필 생성·설정 배치·라운드당 LLM 호출이 전부 이 수에 비례한다.
+    # 0 이하 = 무제한(기존 동작).
+    MAX_SIMULATION_AGENTS = int(os.environ.get('MAX_SIMULATION_AGENTS', '40'))
     OASIS_SIMULATION_DATA_DIR = os.path.join(os.path.dirname(__file__), '../uploads/simulations')
 
     # OASIS 플랫폼 액션 설정
@@ -93,7 +101,7 @@ class Config:
 
     # 보고서 에이전트 설정
     REPORT_AGENT_MAX_TOOL_CALLS = int(os.environ.get('REPORT_AGENT_MAX_TOOL_CALLS', '5'))
-    REPORT_AGENT_MAX_REFLECTION_ROUNDS = int(os.environ.get('REPORT_AGENT_MAX_REFLECTION_ROUNDS', '2'))
+    REPORT_AGENT_MAX_REFLECTION_ROUNDS = int(os.environ.get('REPORT_AGENT_MAX_REFLECTION_ROUNDS', '1'))
     REPORT_AGENT_TEMPERATURE = float(os.environ.get('REPORT_AGENT_TEMPERATURE', '0.5'))
 
     @classmethod

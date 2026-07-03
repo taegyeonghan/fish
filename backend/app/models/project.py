@@ -44,8 +44,10 @@ class Project:
     graph_build_task_id: Optional[str] = None
     
     simulation_requirement: Optional[str] = None
-    chunk_size: int = 500
-    chunk_overlap: int = 50
+    # 0 = 미설정 → 빌드 시 Config.DEFAULT_CHUNK_SIZE/OVERLAP 사용.
+    # (과거엔 500/50이 여기 박혀 있어 Config 기본값이 영영 적용되지 않았음)
+    chunk_size: int = 0
+    chunk_overlap: int = 0
     
     error: Optional[str] = None
     
@@ -89,8 +91,9 @@ class Project:
             graph_id=data.get('graph_id'),
             graph_build_task_id=data.get('graph_build_task_id'),
             simulation_requirement=data.get('simulation_requirement'),
-            chunk_size=data.get('chunk_size', 500),
-            chunk_overlap=data.get('chunk_overlap', 50),
+            # legacy 500/50은 하드코딩 기본값이 영속된 것 — 사용자 선택이 아니므로 미설정 취급
+            chunk_size=0 if data.get('chunk_size', 0) in (0, 500) else data['chunk_size'],
+            chunk_overlap=0 if data.get('chunk_overlap', 0) in (0, 50) else data['chunk_overlap'],
             error=data.get('error')
         )
 

@@ -290,7 +290,28 @@ class SimulationManager:
                 defined_entity_types=defined_entity_types,
                 enrich_with_edges=True
             )
-            
+
+            # 에이전트 수 상한: 프로필·설정·라운드당 LLM 호출이 전부 엔티티 수에 비례하므로
+            # 상한 초과 시 그래프 연결도(degree) 상위 순으로 선별한다.
+            # 연결도 상위 = 담론의 중심 행위자. 잘리는 것은 고립된 주변 노드.
+            max_agents = getattr(Config, 'MAX_SIMULATION_AGENTS', 0)
+            if max_agents > 0 and len(filtered.entities) > max_agents:
+                original_count = len(filtered.entities)
+                filtered.entities.sort(
+                    key=lambda e: (len(e.related_edges), len(e.summary or "")),
+                    reverse=True
+                )
+                filtered.entities = filtered.entities[:max_agents]
+                filtered.filtered_count = len(filtered.entities)
+                filtered.entity_types = {
+                    cl for e in filtered.entities
+                    for cl in e.labels if cl not in ("Entity", "Node")
+                }
+                logger.info(
+                    f"에이전트 상한 적용: {original_count} -> {max_agents} "
+                    f"(연결도 상위 선별, MAX_SIMULATION_AGENTS={max_agents})"
+                )
+
             state.entities_count = filtered.filtered_count
             state.entity_types = list(filtered.entity_types)
             

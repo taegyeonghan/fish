@@ -198,16 +198,17 @@ class SimulationConfigGenerator:
     3. 
     """
     
-    MAX_CONTEXT_LENGTH = 50000
+    # 배치 호출마다 이 컨텍스트가 통째로 반복되므로 과하게 잡지 않는다
+    MAX_CONTEXT_LENGTH = 25000
     # Agent
     AGENTS_PER_BATCH = 15
-    
+
     # (설명 생략)
-    TIME_CONFIG_CONTEXT_LENGTH = 10000   # 
-    EVENT_CONFIG_CONTEXT_LENGTH = 8000   # 
-    ENTITY_SUMMARY_LENGTH = 300          # 
+    TIME_CONFIG_CONTEXT_LENGTH = 10000   #
+    EVENT_CONFIG_CONTEXT_LENGTH = 8000   #
+    ENTITY_SUMMARY_LENGTH = 200          #
     AGENT_SUMMARY_LENGTH = 300           # Agent
-    ENTITIES_PER_TYPE_DISPLAY = 20       # 
+    ENTITIES_PER_TYPE_DISPLAY = 10       #
     
     def __init__(
         self,

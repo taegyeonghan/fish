@@ -292,7 +292,7 @@ class OasisProfileGenerator:
             search_results = self.graph_store.search(
                 graph_id=self.graph_id,
                 query=comprehensive_query,
-                limit=30,
+                limit=15,
                 search_type="all"
             )
 
@@ -313,9 +313,9 @@ class OasisProfileGenerator:
 
             context_parts = []
             if results["facts"]:
-                context_parts.append(":\n" + "\n".join(f"- {f}" for f in results["facts"][:20]))
+                context_parts.append(":\n" + "\n".join(f"- {f}" for f in results["facts"][:8]))
             if results["node_summaries"]:
-                context_parts.append(":\n" + "\n".join(f"- {s}" for s in results["node_summaries"][:10]))
+                context_parts.append(":\n" + "\n".join(f"- {s}" for s in results["node_summaries"][:5]))
             results["context"] = "\n\n".join(context_parts)
 
             logger.info(f": {entity_name},  {len(results['facts'])} , {len(results['node_summaries'])} ")
@@ -392,10 +392,10 @@ class OasisProfileGenerator:
             # ：
             new_facts = [f for f in search_results["facts"] if f not in existing_facts]
             if new_facts:
-                context_parts.append("### \n" + "\n".join(f"- {f}" for f in new_facts[:15]))
+                context_parts.append("### \n" + "\n".join(f"- {f}" for f in new_facts[:8]))
 
         if search_results.get("node_summaries"):
-            context_parts.append("### \n" + "\n".join(f"- {s}" for s in search_results["node_summaries"][:10]))
+            context_parts.append("### \n" + "\n".join(f"- {s}" for s in search_results["node_summaries"][:5]))
         
         return "\n\n".join(context_parts)
     
@@ -588,7 +588,7 @@ class OasisProfileGenerator:
         """"""
         
         attrs_str = json.dumps(entity_attributes, ensure_ascii=False) if entity_attributes else ""
-        context_str = context[:3000] if context else ""
+        context_str = context[:1500] if context else ""
         
         return f""",。
 
@@ -637,7 +637,7 @@ JSON，:
         """/"""
         
         attrs_str = json.dumps(entity_attributes, ensure_ascii=False) if entity_attributes else ""
-        context_str = context[:3000] if context else ""
+        context_str = context[:1500] if context else ""
         
         return f"""/,。
 
@@ -748,7 +748,148 @@ JSON，:
     def set_graph_id(self, graph_id: str):
         """ID"""
         self.graph_id = graph_id
-    
+
+    # LLM 1콜당 묶는 엔티티 수 — 개별 생성 대비 호출 수를 1/N로 줄인다.
+    # 프로필 JSON은 작은 산출물이라 배치해도 출력이 잘릴 위험이 낮다.
+    PROFILE_BATCH_SIZE = 6
+
+    def _profile_from_data(
+        self,
+        entity: EntityNode,
+        user_id: int,
+        profile_data: Dict[str, Any]
+    ) -> OasisAgentProfile:
+        """LLM 산출 profile_data → OasisAgentProfile (개별 경로와 동일한 조립 규칙)"""
+        entity_type = entity.get_entity_type() or "Entity"
+        return OasisAgentProfile(
+            user_id=user_id,
+            user_name=self._generate_username(entity.name),
+            name=entity.name,
+            bio=profile_data.get("bio") or f"{entity_type}: {entity.name}",
+            persona=profile_data.get("persona") or entity.summary or f"A {entity_type} named {entity.name}.",
+            karma=profile_data.get("karma", random.randint(500, 5000)),
+            friend_count=profile_data.get("friend_count", random.randint(50, 500)),
+            follower_count=profile_data.get("follower_count", random.randint(100, 1000)),
+            statuses_count=profile_data.get("statuses_count", random.randint(100, 2000)),
+            age=profile_data.get("age"),
+            gender=profile_data.get("gender"),
+            mbti=profile_data.get("mbti"),
+            country=profile_data.get("country"),
+            profession=profile_data.get("profession"),
+            interested_topics=profile_data.get("interested_topics", []),
+            source_entity_uuid=entity.uuid,
+            source_entity_type=entity_type,
+        )
+
+    def _build_batch_entity_block(self, index: int, entity: EntityNode) -> str:
+        """배치 프롬프트용 엔티티 요약 블록 — 이미 로드된 related_edges만 쓰고
+        엔티티별 그래프 검색은 하지 않는다(배치화의 토큰 절감 포인트)."""
+        entity_type = entity.get_entity_type() or "Entity"
+        kind = "individual" if self._is_individual_entity(entity_type) else "group"
+
+        lines = [
+            f"### Entity {index}",
+            f"- name: {entity.name}",
+            f"- type: {entity_type} ({kind})",
+        ]
+        summary = (entity.summary or "").strip()
+        if summary:
+            lines.append(f"- summary: {summary[:300]}")
+        if entity.attributes:
+            attrs = json.dumps(entity.attributes, ensure_ascii=False)
+            if attrs != "{}":
+                lines.append(f"- attributes: {attrs[:300]}")
+        facts = []
+        for edge in (entity.related_edges or []):
+            fact = edge.get("fact")
+            if fact:
+                facts.append(f"  - {fact}")
+            if len(facts) >= 8:
+                break
+        if facts:
+            lines.append("- facts:")
+            lines.extend(facts)
+        return "\n".join(lines)
+
+    def _generate_profiles_batch_llm(
+        self,
+        batch: List[EntityNode]
+    ) -> List[Optional[Dict[str, Any]]]:
+        """
+        엔티티 여러 개의 프로필을 LLM 1콜로 생성.
+
+        Returns:
+            batch와 같은 길이의 리스트. 실패/누락 항목은 None (호출측에서 개별 폴백).
+        """
+        n = len(batch)
+        blocks = "\n\n".join(
+            self._build_batch_entity_block(i + 1, e) for i, e in enumerate(batch)
+        )
+
+        system_prompt = (
+            "당신은 소셜미디어 시뮬레이션용 에이전트 프로필을 설계하는 전문가다. "
+            "JSON만 출력한다.\n\n" + get_language_instruction()
+        )
+        prompt = f"""아래 {n}개 엔티티 각각에 대해 소셜미디어 시뮬레이션용 에이전트 프로필을 생성하라.
+kind=individual이면 실존감 있는 개인 인물로, kind=group이면 기관/단체의 공식 계정으로 작성한다.
+
+{blocks}
+
+JSON으로만 출력:
+{{"profiles": [{{"index": 1, "bio": "최대 150자 소개", "persona": "400~800자: 성격·가치관·말투·관심사·소셜미디어 행동 패턴", "age": 30, "gender": "male|female|other", "mbti": "INTJ", "country": "국가명", "profession": "직업/유형", "interested_topics": ["토픽1", "토픽2"]}}]}}
+
+규칙:
+- profiles 배열은 정확히 {n}개, index는 위 Entity 번호와 일치시킨다.
+- persona는 해당 엔티티의 summary/facts에 근거해 작성한다.
+- individual: 구체적 개인(나이·성별·MBTI 현실적으로). group: gender="other", age=30, 기관 공식 계정 톤.
+"""
+
+        last_error = None
+        for attempt in range(2):
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model_name,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt}
+                    ],
+                    response_format={"type": "json_object"},
+                    temperature=0.7 - (attempt * 0.2)
+                )
+                content = response.choices[0].message.content
+                if response.choices[0].finish_reason == 'length':
+                    logger.warning(f"배치 프로필 응답 잘림 (attempt {attempt+1}), 복구 시도...")
+                    content = self._fix_truncated_json(content)
+
+                parsed = json.loads(content)
+                items = parsed.get("profiles", [])
+                if not isinstance(items, list):
+                    raise ValueError("profiles가 배열이 아님")
+
+                results: List[Optional[Dict[str, Any]]] = [None] * n
+                for item in items:
+                    if not isinstance(item, dict):
+                        continue
+                    try:
+                        pos = int(item.get("index", 0)) - 1
+                    except (TypeError, ValueError):
+                        continue
+                    if 0 <= pos < n and results[pos] is None:
+                        results[pos] = item
+                filled = sum(1 for r in results if r is not None)
+                if filled == 0:
+                    raise ValueError("유효한 프로필 항목 없음")
+                if filled < n:
+                    logger.warning(f"배치 프로필 {filled}/{n}건만 생성 — 누락분 개별 폴백 예정")
+                return results
+
+            except Exception as e:
+                logger.warning(f"배치 프로필 생성 실패 (attempt {attempt+1}): {str(e)[:100]}")
+                last_error = e
+                time.sleep(1 * (attempt + 1))
+
+        raise RuntimeError(f"배치 프로필 생성 최종 실패: {last_error}")
+
     def generate_profiles_from_entities(
         self,
         entities: List[EntityNode],
@@ -849,58 +990,102 @@ JSON，:
                 )
                 return idx, fallback_profile, str(e)
         
-        logger.info(f" {total} Agent（: {parallel_count}）...")
+        def generate_batch_job(start_idx: int, batch: List[EntityNode]) -> List[tuple]:
+            """엔티티 배치를 LLM 1콜로 처리. 배치 실패/누락 엔티티는 개별 생성으로 폴백."""
+            set_locale(current_locale)
+            batch_results: Optional[List[Optional[Dict[str, Any]]]] = None
+            try:
+                batch_results = self._generate_profiles_batch_llm(batch)
+            except Exception as e:
+                logger.warning(f"배치 프로필 생성 실패 — 개별 생성 폴백: {str(e)[:100]}")
+
+            out = []
+            for j, entity in enumerate(batch):
+                idx = start_idx + j
+                data = batch_results[j] if batch_results else None
+                if data is not None:
+                    try:
+                        profile = self._profile_from_data(entity, idx, data)
+                        self._print_generated_profile(
+                            entity.name, entity.get_entity_type() or "Entity", profile
+                        )
+                        out.append((idx, profile, None))
+                        continue
+                    except Exception as e:
+                        logger.warning(f"배치 항목 조립 실패({entity.name}) — 개별 폴백: {e}")
+                out.append(generate_single_profile(idx, entity))
+            return out
+
+        # LLM 사용 시 배치(1콜에 여러 엔티티), 아니면 기존 개별(규칙 기반) 처리
+        if use_llm:
+            bs = self.PROFILE_BATCH_SIZE
+            jobs = [
+                (start, entities[start:start + bs])
+                for start in range(0, total, bs)
+            ]
+            submit = lambda ex, job: ex.submit(generate_batch_job, job[0], job[1])
+        else:
+            jobs = [(idx, entity) for idx, entity in enumerate(entities)]
+            submit = lambda ex, job: ex.submit(
+                lambda i, e: [generate_single_profile(i, e)], job[0], job[1]
+            )
+
+        logger.info(
+            f" {total} Agent（작업 {len(jobs)}건, 병렬: {parallel_count}, "
+            f"배치크기: {self.PROFILE_BATCH_SIZE if use_llm else 1}）..."
+        )
         print(f"\n{'='*60}")
         print(f"Agent -  {total} ，: {parallel_count}")
         print(f"{'='*60}\n")
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_count) as executor:
-            future_to_entity = {
-                executor.submit(generate_single_profile, idx, entity): (idx, entity)
-                for idx, entity in enumerate(entities)
-            }
-            
-            for future in concurrent.futures.as_completed(future_to_entity):
-                idx, entity = future_to_entity[future]
-                entity_type = entity.get_entity_type() or "Entity"
-                
+            future_to_job = {submit(executor, job): job for job in jobs}
+
+            for future in concurrent.futures.as_completed(future_to_job):
+                job = future_to_job[future]
                 try:
-                    result_idx, profile, error = future.result()
+                    results = future.result()
+                except Exception as e:
+                    # 폴백까지 전부 실패한 극단 케이스 — 최소 프로필로 채움
+                    logger.error(f"프로필 작업 실패: {str(e)}")
+                    batch_entities = job[1] if use_llm else [job[1]]
+                    start = job[0]
+                    results = []
+                    for j, entity in enumerate(batch_entities):
+                        etype = entity.get_entity_type() or "Entity"
+                        results.append((
+                            start + j if use_llm else start,
+                            OasisAgentProfile(
+                                user_id=start + j if use_llm else start,
+                                user_name=self._generate_username(entity.name),
+                                name=entity.name,
+                                bio=f"{etype}: {entity.name}",
+                                persona=entity.summary or "A participant in social discussions.",
+                                source_entity_uuid=entity.uuid,
+                                source_entity_type=etype,
+                            ),
+                            str(e)
+                        ))
+
+                for result_idx, profile, error in results:
                     profiles[result_idx] = profile
-                    
                     with lock:
                         completed_count[0] += 1
                         current = completed_count[0]
-                    
-                    save_profiles_realtime()
-                    
+
                     if progress_callback:
                         progress_callback(
-                            current, 
-                            total, 
-                            f"완료 {current}/{total}: {entity.name} ({entity_type})"
+                            current,
+                            total,
+                            f"완료 {current}/{total}: {profile.name} ({profile.source_entity_type})"
                         )
-                    
-                    if error:
-                        logger.warning(f"[{current}/{total}] {entity.name} fallback persona used: {error}")
-                    else:
-                        logger.info(f"[{current}/{total}] Persona generated: {entity.name} ({entity_type})")
 
-                except Exception as e:
-                    logger.error(f"Exception while processing entity {entity.name}: {str(e)}")
-                    with lock:
-                        completed_count[0] += 1
-                    profiles[idx] = OasisAgentProfile(
-                        user_id=idx,
-                        user_name=self._generate_username(entity.name),
-                        name=entity.name,
-                        bio=f"{entity_type}: {entity.name}",
-                        persona=entity.summary or "A participant in social discussions.",
-                        source_entity_uuid=entity.uuid,
-                        source_entity_type=entity_type,
-                    )
-                    # (설명 생략)
-                    save_profiles_realtime()
+                    if error:
+                        logger.warning(f"[{current}/{total}] {profile.name} fallback persona used: {error}")
+                    else:
+                        logger.info(f"[{current}/{total}] Persona generated: {profile.name} ({profile.source_entity_type})")
+
+                save_profiles_realtime()
         
         print(f"\n{'='*60}")
         print(f"！ {len([p for p in profiles if p])} Agent")

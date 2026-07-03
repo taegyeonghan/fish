@@ -110,8 +110,8 @@ class GraphBuilderService:
         text: str,
         ontology: Dict[str, Any],
         graph_name: str = "UngdrooFish Graph",
-        chunk_size: int = 500,
-        chunk_overlap: int = 50,
+        chunk_size: int = None,
+        chunk_overlap: int = None,
         batch_size: int = 3
     ) -> str:
         """
@@ -189,7 +189,11 @@ class GraphBuilderService:
             )
 
             # 3. 텍스트 분할
-            chunks = TextProcessor.split_text(text, chunk_size, chunk_overlap)
+            chunks = TextProcessor.split_text(
+                text,
+                chunk_size or Config.DEFAULT_CHUNK_SIZE,
+                chunk_overlap or Config.DEFAULT_CHUNK_OVERLAP,
+            )
             total_chunks = len(chunks)
             self.task_manager.update_task(
                 task_id,
@@ -290,7 +294,9 @@ class GraphBuilderService:
             raw = self.llm_client.chat(
                 messages=messages,
                 temperature=0.1,
-                max_tokens=8192
+                # 청크당 엔티티 상한이 한 자릿수라 출력은 1~2K 토큰이면 충분.
+                # 과도한 상한은 모델이 장황하게 뽑는 폭주를 방치한다.
+                max_tokens=2048
             )
             import re
             cleaned = raw.strip()
@@ -375,6 +381,13 @@ class GraphBuilderService:
             batch_size: 배치 크기 (진행률 업데이트 단위)
             progress_callback: 진행률 콜백 함수
         """
+        # 청크 수 상한 — 노드 상한이 초반에 이미 차는 긴 문서에서
+        # 결과가 통째로 버려질 잔여 추출 호출을 사전에 자른다.
+        max_chunks = getattr(Config, 'MAX_EXTRACTION_CHUNKS', 0)
+        if max_chunks > 0 and len(chunks) > max_chunks:
+            logger.info(f"[graph_build] 청크 상한 적용: {len(chunks)} -> {max_chunks}")
+            chunks = chunks[:max_chunks]
+
         total_chunks = len(chunks)
         if total_chunks == 0:
             return
@@ -403,9 +416,14 @@ class GraphBuilderService:
         )
 
         # ===== Phase 1: 청크별 LLM 추출을 병렬 실행 (가장 느린 부분) =====
+        # 조기 중단: 추출된 고유 엔티티 추정치가 노드 상한에 도달하면 아직 시작 안 된
+        # 잔여 future를 취소한다 (해소·병합 전 추정이라 실제보다 과대 → 보수적으로 일찍 멈춤).
         extractions: List[Optional[Dict[str, Any]]] = [None] * total_chunks
         max_workers = max(1, min(Config.GRAPH_BUILD_MAX_WORKERS, total_chunks))
         completed = 0
+        cancelled = 0
+        cancel_swept = False
+        seen_entity_names: set = set()
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_idx = {
                 executor.submit(self._extract_entities_from_chunk, chunk, ontology_desc): idx
@@ -413,18 +431,37 @@ class GraphBuilderService:
             }
             for future in as_completed(future_to_idx):
                 idx = future_to_idx[future]
+                if future.cancelled():
+                    cancelled += 1
+                    continue
                 try:
                     extractions[idx] = future.result()
                 except Exception as e:
                     logger.error(f"청크 {idx} 추출 실패: {type(e).__name__}: {str(e)[:150]}")
                     extractions[idx] = {"entities": [], "relations": []}
                 completed += 1
+
+                for entity in (extractions[idx] or {}).get("entities", []):
+                    name = (entity.get("name") or "").strip().casefold()
+                    if name:
+                        seen_entity_names.add(name)
+                if not cancel_swept and len(seen_entity_names) >= Config.MAX_GRAPH_NODES:
+                    cancel_swept = True
+                    n_cancelled = sum(1 for f in future_to_idx if f.cancel())
+                    if n_cancelled:
+                        logger.info(
+                            f"[graph_build] 노드 상한 추정 도달(unique~{len(seen_entity_names)}"
+                            f">={Config.MAX_GRAPH_NODES}) — 잔여 청크 {n_cancelled}건 추출 취소"
+                        )
+
                 if progress_callback:
                     # 추출이 전체의 85%를 차지, 나머지는 그래프 적재
                     progress_callback(
                         t('progress.sendingBatch', current=completed, total=total_chunks, chunks=1),
                         (completed / total_chunks) * 0.85
                     )
+        if cancelled:
+            logger.info(f"[graph_build] 조기 중단으로 청크 {cancelled}건 미추출 (LLM 호출 절약)")
 
         # ===== Phase 2: 순차 적재 (dedup·해소·상한·검증·grounding) =====
         # SQLite 쓰기는 단일 스레드로 유지해 락/순서 충돌 방지
