@@ -26,8 +26,8 @@
     "files": "files"
   },
   "meta": {
-    "title": "UngdrooFish - Predict Everything",
-    "description": "UngdrooFish - Social Media Opinion Simulation System"
+    "title": "Ontology Simulator - Predict Everything",
+    "description": "Ontology Simulator - Social Media Opinion Simulation System"
   },
   "nav": {
     "visitGithub": "Visit our Github page"
@@ -38,7 +38,7 @@
     "heroTitle1": "Upload Reports,",
     "heroTitle2": "Predict the Future",
     "heroDesc": "From a single document, {brand} extracts reality seeds to auto-generate a parallel world with up to {agentScale}. Inject variables from a god's-eye view to find the {optimalSolution} in complex group dynamics.",
-    "heroDescBrand": "UngdrooFish",
+    "heroDescBrand": "Ontology Simulator",
     "heroDescAgentScale": "million-scale Agents",
     "heroDescOptimalSolution": "\"local optimum\"",
     "slogan": "Let Agents rehearse the future, let decisions prevail",
@@ -67,7 +67,7 @@
     "inputParams": "Input Parameters",
     "simulationPrompt": ">_ 02 / Simulation Prompt",
     "promptPlaceholder": "// Describe your simulation or prediction requirement in natural language",
-    "engineBadge": "Engine: UngdrooFish-V1.0",
+    "engineBadge": "Engine: Ontology Simulator-V1.0",
     "startEngine": "Start Engine",
     "initializing": "Initializing..."
   },
@@ -86,6 +86,8 @@
     "analyzingDocs": "Analyzing documents...",
     "graphRagBuild": "GraphRAG Build",
     "graphRagDesc": "Based on the generated ontology, documents are auto-chunked and sent to Zep to build a knowledge graph, extracting entities and relations, forming temporal memory and community summaries",
+    "graphRagBuilding": "Extracting entities & relations...",
+    "graphRagBuildNote": "Extracting entities and relations from document chunks. This can take a few minutes depending on document size; the node/edge counts above update in real time.",
     "entityNodes": "Entity Nodes",
     "relationEdges": "Relation Edges",
     "schemaTypes": "Schema Types",
@@ -145,7 +147,7 @@
     "setupComplete": "Setup Complete",
     "setupCompleteDesc": "Simulation environment is ready. You can now start the simulation.",
     "roundsConfig": "Simulation Rounds Configuration",
-    "roundsConfigDesc": "UngdrooFish auto-plans to simulate {hours} real-world hours, each round representing {minutesPerRound} minutes of elapsed time",
+    "roundsConfigDesc": "Ontology Simulator auto-plans to simulate {hours} real-world hours, each round representing {minutesPerRound} minutes of elapsed time",
     "customToggle": "Custom",
     "roundsUnit": "rounds",
     "estimatedDuration": "For 100 Agents: est. ~{minutes} minutes",
@@ -257,7 +259,7 @@
     "selectChatTarget": "Select chat target",
     "sendSurvey": "Send survey to the world",
     "reportAgentChat": "Report Agent - Chat",
-    "reportAgentDesc": "A conversational version of the report generation agent with access to 4 professional tools and UngdrooFish's complete memory",
+    "reportAgentDesc": "A conversational version of the report generation agent with access to 4 professional tools and Ontology Simulator's complete memory",
     "toolInsightForge": "InsightForge Deep Attribution",
     "toolInsightForgeDesc": "Aligns real-world seed data with simulation state, combining Global/Local Memory for cross-temporal deep attribution analysis",
     "toolPanoramaSearch": "PanoramaSearch Full Tracking",

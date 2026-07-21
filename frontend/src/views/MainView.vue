@@ -31,7 +31,7 @@
       <!-- Subheader -->
       <div class="uf-subheader">
         <div class="uf-subheader-left">
-          <span class="uf-crumb">UngdrooFish</span>
+          <span class="uf-crumb">Ontology Simulator</span>
           <span class="uf-crumb-arrow">▸</span>
           <span class="uf-crumb">Step {{ currentStep }}</span>
           <span class="uf-crumb-arrow">▸</span>
@@ -322,7 +322,14 @@ const pollTaskStatus = async (taskId) => {
     if (res.success) {
       const task = res.data
       if (task.message && task.message !== buildProgress.value?.message) addLog(task.message)
-      buildProgress.value = { progress: task.progress || 0, message: task.message }
+      // progress_detail(누적 노드/엣지 수)를 실시간 표시용으로 보존. 없으면 직전 값 유지(구 백엔드 호환).
+      const detail = task.progress_detail || {}
+      buildProgress.value = {
+        progress: task.progress || 0,
+        message: task.message,
+        node_count: detail.node_count ?? buildProgress.value?.node_count ?? 0,
+        edge_count: detail.edge_count ?? buildProgress.value?.edge_count ?? 0,
+      }
       if (task.status === 'completed') {
         addLog('Graph build task completed.')
         stopPolling()

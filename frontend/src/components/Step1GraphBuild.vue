@@ -140,6 +140,13 @@
               <span class="stat-label">{{ $t('step1.schemaTypes') }}</span>
             </div>
           </div>
+
+          <!-- Live build progress: 진행 메시지 + 소요시간 안내(행처럼 안 보이게) -->
+          <div v-if="currentPhase === 1" class="progress-section">
+            <div class="spinner-sm"></div>
+            <span>{{ buildProgress?.message || $t('step1.graphRagBuilding') }}</span>
+          </div>
+          <p v-if="currentPhase === 1" class="build-note">{{ $t('step1.graphRagBuildNote') }}</p>
         </div>
       </div>
 
@@ -250,8 +257,14 @@ const selectOntologyItem = (item, type) => {
 }
 
 const graphStats = computed(() => {
-  const nodes = props.graphData?.node_count || props.graphData?.nodes?.length || 0
-  const edges = props.graphData?.edge_count || props.graphData?.edges?.length || 0
+  // 빌드 중엔 폴링 증분 카운트(buildProgress.node_count/edge_count = task.progress_detail)를,
+  // 완료 후엔 전체 graphData 를 표시한다. 둘 중 큰 값으로 안전하게(구 백엔드=progress_detail 없음 → 0 폴백).
+  const g = props.graphData || {}
+  const bp = props.buildProgress || {}
+  const gNodes = g.node_count ?? g.nodes?.length ?? 0
+  const gEdges = g.edge_count ?? g.edges?.length ?? 0
+  const nodes = Math.max(Number(gNodes) || 0, Number(bp.node_count) || 0)
+  const edges = Math.max(Number(gEdges) || 0, Number(bp.edge_count) || 0)
   const types = props.projectData?.ontology?.entity_types?.length || 0
   return { nodes, edges, types }
 })
@@ -630,6 +643,14 @@ watch(() => props.systemLogs.length, () => {
   font-size: 12px;
   color: #FF5722;
   margin-bottom: 12px;
+  margin-top: 12px;
+}
+
+.build-note {
+  font-size: 11px;
+  color: #999;
+  line-height: 1.5;
+  margin-top: 4px;
 }
 
 .spinner-sm {
