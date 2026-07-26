@@ -183,7 +183,7 @@
     <div class="system-logs">
       <div class="log-header">
         <span class="log-title">SYSTEM DASHBOARD</span>
-        <span class="log-id">UngdrooFish v1.0</span>
+        <span class="log-id">Ontology Simulator v1.0</span>
       </div>
       <div class="log-content" ref="logContent">
         <div class="log-line" v-for="(log, idx) in systemLogs" :key="idx">

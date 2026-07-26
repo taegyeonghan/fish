@@ -60,7 +60,7 @@ class Config:
     )
 
     # Gemstone MCP API 설정
-    GEMSTONE_BASE_URL = os.environ.get('GEMSTONE_BASE_URL', 'https://gemstone.ngrok.app')
+    GEMSTONE_BASE_URL = os.environ.get('GEMSTONE_BASE_URL', 'https://data.waiker.ai')
 
     # 파일 업로드 설정
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB

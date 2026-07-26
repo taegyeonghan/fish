@@ -508,11 +508,11 @@ const fetchRunStatus = async () => {
       
       // （ runner_status ）
       const isCompleted = data.runner_status === 'completed' || data.runner_status === 'stopped'
-      
+
       // ： runner_status，
-      //  twitter_completed  reddit_completed 
+      //  twitter_completed  reddit_completed
       const platformsCompleted = checkPlatformsCompleted(data)
-      
+
       if (isCompleted || platformsCompleted) {
         if (platformsCompleted && !isCompleted) {
           addLog(t('log.allPlatformsCompleted'))

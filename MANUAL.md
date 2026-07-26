@@ -21,7 +21,7 @@ UngdrooFish는 사용자가 입력한 예측 질문을 바탕으로 관련 로�
 LLM_API_KEY=your_api_key
 LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
 LLM_MODEL_NAME=gemini-3-flash-preview
-GEMSTONE_BASE_URL=https://gemstone.ngrok.app
+GEMSTONE_BASE_URL=https://data.waiker.ai
 ```
 
 ### 실행

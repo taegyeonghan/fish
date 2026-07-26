@@ -4,7 +4,7 @@
       <div class="nav-brand" @click="$router.push('/')">
         <img src="../assets/logo/ungdroo_logo.png" alt="logo" class="nav-logo" />
         <div class="nav-name">
-          <span class="nav-title">UngdrooFish</span>
+          <span class="nav-title">Ontology Simulator</span>
           <span class="nav-sub">Investment Simulation Engine</span>
         </div>
       </div>
@@ -21,7 +21,7 @@
         </div>
         <h1 class="hero-title">
           10명의 AI 투자자와 함께<br>
-          <span class="accent">시장의 미래를 시뮬레이션</span>
+          <span class="accent">투자의 미래를 시뮬레이션</span>
         </h1>
         <p class="hero-desc">
           질문을 입력하면 관련 자료를 자동으로 결합하고 가치투자자, 성장주 전문가, 매크로 전략가 등<br>
@@ -30,17 +30,17 @@
       </section>
 
       <div class="flow-indicator">
-        <div class="flow-step" :class="{ done: formData.simulationRequirement.trim() }">
+        <div class="flow-step">
           <div class="flow-num">1</div>
           <div class="flow-label">요구사항 입력</div>
         </div>
         <div class="flow-arrow">→</div>
-        <div class="flow-step" :class="{ done: true }">
+        <div class="flow-step">
           <div class="flow-num">2</div>
           <div class="flow-label">시간 설정</div>
         </div>
         <div class="flow-arrow">→</div>
-        <div class="flow-step" :class="{ done: canSubmit }">
+        <div class="flow-step">
           <div class="flow-num">3</div>
           <div class="flow-label">시작</div>
         </div>
@@ -70,9 +70,14 @@
 
           <div class="prompt-footer">
             <div class="sample-chips">
-              <button class="chip" @click="useSample(0)" type="button">에너지 섹터</button>
-              <button class="chip" @click="useSample(1)" type="button">AI 반도체</button>
-              <button class="chip" @click="useSample(2)" type="button">금리 인상</button>
+              <button
+                v-for="(sample, idx) in samples"
+                :key="sample.topic || sample.label || idx"
+                class="chip"
+                @click="useSample(idx)"
+                type="button"
+                :disabled="newsLoading"
+              >{{ newsLoading ? '뉴스 갱신 중...' : sample.label }}</button>
             </div>
             <div class="char-count">{{ formData.simulationRequirement.length }}</div>
           </div>
@@ -168,8 +173,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import api from '../api'
 import HistoryDatabase from '../components/HistoryDatabase.vue'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 
@@ -177,6 +183,7 @@ const router = useRouter()
 
 const formData = ref({ simulationRequirement: '' })
 const loading = ref(false)
+const newsLoading = ref(false)
 
 const simConfig = ref({
   timeUnit: 'day',
@@ -206,17 +213,51 @@ watch(() => simConfig.value.timeUnit, (newVal) => {
   if (unit) simConfig.value.forecastHorizon = unit.default
 })
 
-const samples = [
-  '원유 가격 급등이 에너지 섹터와 전기차 관련주에 미칠 영향을 분석하고, 각 투자자 페르소나의 관점에서 향후 3개월 전략을 제시해주세요.',
-  'AI 반도체 수요 증가가 엔비디아, TSMC, SK하이닉스 등 주요 기업들에 미칠 영향과 밸류에이션 적정성을 토론해주세요.',
-  '연준의 기준금리 인상이 성장주와 가치주에 미치는 차별적 영향을 분석하고, 섹터별 포지셔닝 전략을 제시해주세요.'
-]
+const samples = ref([
+  {
+    label: '에너지 섹터',
+    topic: 'energy_geopolitics',
+    question: '원유 가격 급등과 지정학적 리스크가 에너지 섹터, 방산주, 인플레이션 기대에 미칠 영향을 분석하고, 각 투자자 페르소나의 관점에서 향후 3개월 전략을 제시해주세요.'
+  },
+  {
+    label: 'AI 반도체',
+    topic: 'ai_semiconductors',
+    question: 'AI 반도체 수요와 데이터센터 투자 사이클이 엔비디아, TSMC, SK하이닉스 등 주요 기업의 실적과 밸류에이션에 미칠 영향을 토론해주세요.'
+  },
+  {
+    label: '금리 인상',
+    topic: 'rates_inflation',
+    question: '연준의 기준금리 경로와 인플레이션 전망 변화가 성장주, 가치주, 금융주에 미치는 차별적 영향을 분석하고 섹터별 포지셔닝 전략을 제시해주세요.'
+  }
+])
 
 const canSubmit = computed(() => {
   return formData.value.simulationRequirement.trim() !== ''
 })
 
-const useSample = (idx) => { formData.value.simulationRequirement = samples[idx] }
+const useSample = (idx) => {
+  const sample = samples.value[idx]
+  if (sample?.question) formData.value.simulationRequirement = sample.question
+}
+
+const refreshNewsSamples = async () => {
+  newsLoading.value = true
+  try {
+    const res = await api.get('/api/invest/sample-questions')
+    const nextSamples = res?.data?.samples
+    if (Array.isArray(nextSamples) && nextSamples.length > 0) {
+      samples.value = nextSamples.slice(0, 3)
+    }
+  } catch (error) {
+    console.warn('Failed to refresh news-based sample questions:', error)
+  } finally {
+    newsLoading.value = false
+  }
+}
+
+onMounted(() => {
+  refreshNewsSamples()
+})
 
 const startSimulation = () => {
   if (!canSubmit.value || loading.value) return
@@ -371,6 +412,7 @@ const startSimulation = () => {
   font-family: inherit;
 }
 .chip:hover { background: var(--c-accent-soft); border-color: var(--c-accent); color: var(--c-accent); }
+.chip:disabled { cursor: wait; opacity: 0.7; }
 .char-count { font-size: 11px; color: var(--c-text-dim); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
 
 /* Time Config */

@@ -30,7 +30,7 @@
     <main class="uf-main">
       <div class="uf-subheader">
         <div class="uf-subheader-left">
-          <span class="uf-crumb">UngdrooFish</span>
+          <span class="uf-crumb">Ontology Simulator</span>
           <span class="uf-crumb-arrow">▸</span>
           <span class="uf-crumb">Step 2</span>
           <span class="uf-crumb-arrow">▸</span>

@@ -1,6 +1,6 @@
 """
 MCP 클라이언트 - Gemstone API 래퍼
-gemstone.ngrok.app의 25개 금융 데이터 엔드포인트를 호출
+data.waiker.ai의 25개 금융 데이터 엔드포인트를 호출
 """
 
 import json
