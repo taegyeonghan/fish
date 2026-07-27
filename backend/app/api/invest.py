@@ -59,7 +59,7 @@ def _fetch_google_news_rss(query: str, limit: int = 5) -> list[dict]:
     req = urllib.request.Request(
         url,
         headers={
-            'User-Agent': 'Mozilla/5.0 (compatible; OntologySimulator/1.0)',
+            'User-Agent': 'Mozilla/5.0 (compatible; WorldModel/1.0)',
             'Accept': 'application/rss+xml, application/xml, text/xml',
         },
     )

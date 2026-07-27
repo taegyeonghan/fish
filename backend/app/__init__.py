@@ -93,7 +93,7 @@ def create_app(config_class=Config):
         if not os.path.isdir(frontend_dist):
             return (
                 'UngdrooFish frontend dist not found. '
-                'Run `npm run build` in gemstone-forecast-sim/frontend.',
+                'Run `npm run build` in world-model/frontend.',
                 503,
             )
         candidate = os.path.join(frontend_dist, path)

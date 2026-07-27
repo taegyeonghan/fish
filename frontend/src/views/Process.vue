@@ -4,7 +4,7 @@
     <nav class="navbar">
       <div class="nav-brand" @click="goHome">
         <img src="../assets/logo/ungdroo_logo.png" alt="logo" class="proc-nav-logo" />
-        Ontology Simulator
+        World Model
       </div>
       
       <!--  -->

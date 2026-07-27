@@ -4,7 +4,7 @@
       <div class="nav-brand" @click="$router.push('/')">
         <img src="../assets/logo/ungdroo_logo.png" alt="logo" class="nav-logo" />
         <div class="nav-name">
-          <span class="nav-title">Ontology Simulator</span>
+          <span class="nav-title">World Model</span>
           <span class="nav-sub">Investment Simulation Engine</span>
         </div>
       </div>

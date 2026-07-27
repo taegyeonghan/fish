@@ -31,7 +31,7 @@
       <!-- Subheader -->
       <div class="uf-subheader">
         <div class="uf-subheader-left">
-          <span class="uf-crumb">Ontology Simulator</span>
+          <span class="uf-crumb">World Model</span>
           <span class="uf-crumb-arrow">▸</span>
           <span class="uf-crumb">Step {{ currentStep }}</span>
           <span class="uf-crumb-arrow">▸</span>

@@ -26,8 +26,8 @@
     "files": "파일"
   },
   "meta": {
-    "title": "Ontology Simulator - 모든 것을 예측하다",
-    "description": "Ontology Simulator - 투자 토론 시뮬레이션 시스템"
+    "title": "World Model - 모든 것을 예측하다",
+    "description": "World Model - 투자 토론 시뮬레이션 시스템"
   },
   "nav": {
     "visitGithub": "Github 페이지 방문"
@@ -38,7 +38,7 @@
     "heroTitle1": "분석 자료를 업로드하고,",
     "heroTitle2": "투자 토론을 시뮬레이션하세요",
     "heroDesc": "단일 문서에서 {brand}가 시드 데이터를 추출하여 최대 {agentScale}의 병렬 세계를 자동 생성합니다. 신의 시점에서 변수를 주입하여 복잡한 그룹 역학에서 {optimalSolution}을 찾아보세요.",
-    "heroDescBrand": "Ontology Simulator",
+    "heroDescBrand": "World Model",
     "heroDescAgentScale": "백만 규모 투자자 에이전트",
     "heroDescOptimalSolution": "\"최적 투자 판단\"",
     "slogan": "투자자 에이전트가 미래를 리허설하고, 의사결정이 승리하도록",
@@ -67,7 +67,7 @@
     "inputParams": "입력 파라미터",
     "simulationPrompt": ">_ 02 / 시뮬레이션 프롬프트",
     "promptPlaceholder": "// 자연어로 시뮬레이션 또는 예측 요구사항을 설명하세요",
-    "engineBadge": "엔진: Ontology Simulator-V1.0",
+    "engineBadge": "엔진: World Model-V1.0",
     "startEngine": "엔진 시작",
     "initializing": "초기화 중..."
   },
@@ -147,7 +147,7 @@
     "setupComplete": "설정 완료",
     "setupCompleteDesc": "시뮬레이션 환경이 준비되었습니다. 이제 시뮬레이션을 시작할 수 있습니다.",
     "roundsConfig": "시뮬레이션 라운드 설정",
-    "roundsConfigDesc": "Ontology Simulator가 {hours}시간의 실제 시간을 시뮬레이션하도록 자동 계획하며, 각 라운드는 {minutesPerRound}분의 경과 시간을 나타냅니다",
+    "roundsConfigDesc": "World Model이 {hours}시간의 실제 시간을 시뮬레이션하도록 자동 계획하며, 각 라운드는 {minutesPerRound}분의 경과 시간을 나타냅니다",
     "customToggle": "사용자 정의",
     "roundsUnit": "라운드",
     "estimatedDuration": "100 에이전트 기준: 약 ~{minutes}분 소요 예상",
@@ -259,7 +259,7 @@
     "selectChatTarget": "대화 상대 선택",
     "sendSurvey": "월드에 설문 보내기",
     "reportAgentChat": "보고서 에이전트 - 대화",
-    "reportAgentDesc": "4가지 전문 도구와 Ontology Simulator의 완전한 메모리에 접근 가능한 대화형 보고서 생성 에이전트",
+    "reportAgentDesc": "4가지 전문 도구와 World Model의 완전한 메모리에 접근 가능한 대화형 보고서 생성 에이전트",
     "toolInsightForge": "InsightForge 심층 귀인 분석",
     "toolInsightForgeDesc": "실제 시드 데이터와 시뮬레이션 상태를 정렬하고, 글로벌/로컬 메모리를 결합하여 시간 교차 심층 귀인 분석을 수행합니다",
     "toolPanoramaSearch": "PanoramaSearch 전체 추적",
