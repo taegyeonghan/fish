@@ -66,24 +66,24 @@
         </div>
       </div>
 
-      <!-- Section 03: 투자자 페르소나 선택 -->
+      <!-- Section 03: 금융 객체 선택 -->
       <div class="step-card">
         <div class="card-header">
           <div class="step-info">
             <span class="step-num">03</span>
-            <span class="step-title">투자자 페르소나 선택</span>
+            <span class="step-title">금융 세계 객체 선택</span>
           </div>
           <div class="step-status">
             <span class="badge" :class="selectedPersonaIds.length >= 4 && selectedPersonaIds.length <= 8 ? 'success' : selectedPersonaIds.length > 0 ? 'processing' : 'pending'">
-              {{ selectedPersonaIds.length }}명 선택
+              {{ selectedPersonaIds.length }}개 선택
             </span>
           </div>
         </div>
         <div class="card-content">
           <p class="api-note">GET /api/invest/personas</p>
           <p class="description">
-            토론에 참여할 투자자 페르소나를 4~8명 선택해주세요.
-            각 페르소나는 고유한 투자 성향과 전략을 가지고 있습니다.
+            상호작용에 참여할 금융 객체를 4~8개 선택해주세요.
+            각 객체는 고유한 목표, 제약, 상태와 행동 규칙을 가지고 있습니다.
           </p>
 
           <div class="persona-actions">
@@ -96,14 +96,14 @@
               {{ recommending ? '추천 중...' : '주제 기반 추천 받기' }}
             </button>
             <span class="persona-hint" v-if="selectedPersonaIds.length > 0 && (selectedPersonaIds.length < 4 || selectedPersonaIds.length > 8)">
-              {{ selectedPersonaIds.length < 4 ? `최소 4명을 선택해주세요 (현재 ${selectedPersonaIds.length}명)` : `최대 8명까지 선택 가능합니다 (현재 ${selectedPersonaIds.length}명)` }}
+              {{ selectedPersonaIds.length < 4 ? `최소 4개를 선택해주세요 (현재 ${selectedPersonaIds.length}개)` : `최대 8개까지 선택 가능합니다 (현재 ${selectedPersonaIds.length}개)` }}
             </span>
           </div>
 
           <!-- Loading -->
           <div v-if="loadingPersonas" class="progress-section">
             <div class="spinner-sm"></div>
-            <span>페르소나 목록을 불러오는 중...</span>
+            <span>금융 객체 목록을 불러오는 중...</span>
           </div>
 
           <!-- Error -->
@@ -250,7 +250,7 @@ const fetchPersonas = async () => {
     personas.value = Array.isArray(data) ? data : (data.personas || [])
   } catch (err) {
     console.error('Failed to fetch personas:', err)
-    personaError.value = '페르소나 목록을 불러오지 못했습니다: ' + (err.message || '알 수 없는 오류')
+    personaError.value = '금융 객체 목록을 불러오지 못했습니다: ' + (err.message || '알 수 없는 오류')
   } finally {
     loadingPersonas.value = false
   }
@@ -299,8 +299,8 @@ const validationMessage = computed(() => {
   const issues = []
   if (!topic.value.trim()) issues.push('토론 주제를 입력해주세요')
   if (tickers.value.length === 0) issues.push('종목을 최소 1개 추가해주세요')
-  if (selectedPersonaIds.value.length < 4) issues.push('페르소나를 최소 4명 선택해주세요')
-  if (selectedPersonaIds.value.length > 8) issues.push('페르소나는 최대 8명까지 선택 가능합니다')
+  if (selectedPersonaIds.value.length < 4) issues.push('금융 객체를 최소 4개 선택해주세요')
+  if (selectedPersonaIds.value.length > 8) issues.push('금융 객체는 최대 8개까지 선택 가능합니다')
   return issues.join(' / ')
 })
 

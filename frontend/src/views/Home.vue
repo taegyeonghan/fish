@@ -4,11 +4,12 @@
       <div class="nav-brand" @click="$router.push('/')">
         <img src="../assets/logo/ungdroo_logo.png" alt="logo" class="nav-logo" />
         <div class="nav-name">
-          <span class="nav-title">World Model</span>
-          <span class="nav-sub">Investment Simulation Engine</span>
+          <span class="nav-title">WORLD<span>//</span>MODEL</span>
+          <span class="nav-sub">FINANCIAL SIMULATION LAB</span>
         </div>
       </div>
       <div class="nav-actions">
+        <div class="engine-state"><span></span> Engine online</div>
         <LanguageSwitcher />
       </div>
     </nav>
@@ -17,16 +18,26 @@
       <section class="hero">
         <div class="hero-badge">
           <span class="pulse-dot"></span>
-          <span>AI-Powered Investment Debate</span>
+          <span>LIVE FINANCIAL WORLD ENGINE</span>
         </div>
         <h1 class="hero-title">
-          10명의 AI 투자자와 함께<br>
-          <span class="accent">투자의 미래를 시뮬레이션</span>
+          금융의 다음 장면을<br>
+          <span class="accent">먼저 살아봅니다.</span>
         </h1>
         <p class="hero-desc">
-          질문을 입력하면 관련 자료를 자동으로 결합하고 가치투자자, 성장주 전문가, 매크로 전략가 등<br>
-          다양한 관점의 AI 페르소나가 토론을 통해 투자 시나리오를 도출합니다.
+          시장 이벤트와 가설을 입력하세요. 연준·정부·기업·산업·시장 참여자 등 금융 객체들이<br>
+          하나의 세계 안에서 서로 반응하고 논쟁하며 미래의 경로를 만들어냅니다.
         </p>
+        <div class="entity-orbit" aria-hidden="true">
+          <div class="orbit-ring ring-outer"></div>
+          <div class="orbit-ring ring-inner"></div>
+          <div class="world-core">WORLD<span>STATE</span></div>
+          <div class="world-entity entity-fed">FED<small>POLICY</small></div>
+          <div class="world-entity entity-gov">GOV<small>FISCAL</small></div>
+          <div class="world-entity entity-corp">CORP<small>EARNINGS</small></div>
+          <div class="world-entity entity-market">MARKET<small>PRICE</small></div>
+          <div class="world-entity entity-household">HOUSEHOLD<small>DEMAND</small></div>
+        </div>
       </section>
 
       <div class="flow-indicator">
@@ -55,15 +66,15 @@
               </svg>
             </div>
             <div class="card-title-group">
-              <div class="card-title">시뮬레이션 요구사항</div>
-              <div class="card-hint">분석하고 싶은 투자 시나리오를 자연어로 설명</div>
+              <div class="card-title">시나리오 가설</div>
+              <div class="card-hint">어떤 금융 세계를 만들어볼지 자연어로 설명하세요</div>
             </div>
           </div>
 
           <textarea
             v-model="formData.simulationRequirement"
             class="prompt-input"
-            placeholder="예) 이란-이스라엘 전쟁이 장기화될 경우 에너지 섹터와 방산주에 미칠 영향을 분석하고, 각 투자자 페르소나의 관점에서 향후 6개월 전략을 제시해주세요."
+            placeholder="예) 이란-이스라엘 전쟁이 장기화될 경우 연준, 산유국 정부, 에너지 기업, 방산 기업, 가계와 자본시장이 서로 어떻게 반응하며 향후 6개월의 금융 환경을 만들어가는지 시뮬레이션해주세요."
             rows="7"
             :disabled="loading"
           ></textarea>
@@ -94,8 +105,8 @@
             </svg>
           </div>
           <div class="tc-title-group">
-            <div class="tc-title">시뮬레이션 시간 설정</div>
-            <div class="tc-hint">에이전트가 시뮬레이션할 시간 단위와 전체 예측 기간</div>
+            <div class="tc-title">시뮬레이션 시간축</div>
+            <div class="tc-hint">세계가 움직이는 속도와 전체 예측 구간</div>
           </div>
         </div>
 
@@ -149,7 +160,7 @@
           @click="startSimulation"
           :disabled="!canSubmit || loading"
         >
-          <span v-if="!loading">시뮬레이션 시작하기</span>
+          <span v-if="!loading">금융 세계 생성하기</span>
           <span v-else>엔진 초기화 중...</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="5" y1="12" x2="19" y2="12"/>
@@ -163,8 +174,8 @@
 
       <section class="history">
         <div class="history-header">
-          <h2 class="history-title">최근 시뮬레이션</h2>
-          <span class="history-sub">이전에 실행한 프로젝트</span>
+          <h2 class="history-title">시뮬레이션 아카이브</h2>
+          <span class="history-sub">이전에 생성한 금융 세계와 분석 기록</span>
         </div>
         <HistoryDatabase />
       </section>
@@ -217,17 +228,17 @@ const samples = ref([
   {
     label: '에너지 섹터',
     topic: 'energy_geopolitics',
-    question: '원유 가격 급등과 지정학적 리스크가 에너지 섹터, 방산주, 인플레이션 기대에 미칠 영향을 분석하고, 각 투자자 페르소나의 관점에서 향후 3개월 전략을 제시해주세요.'
+    question: '원유 가격 급등과 지정학적 리스크에 대해 연준, 산유국 정부, 에너지 기업, 방산 기업, 가계와 자본시장이 서로 어떻게 반응하며 향후 3개월의 금융 환경을 만들어가는지 시뮬레이션해주세요.'
   },
   {
     label: 'AI 반도체',
     topic: 'ai_semiconductors',
-    question: 'AI 반도체 수요와 데이터센터 투자 사이클이 엔비디아, TSMC, SK하이닉스 등 주요 기업의 실적과 밸류에이션에 미칠 영향을 토론해주세요.'
+    question: 'AI 반도체 수요와 데이터센터 투자 사이클을 둘러싸고 엔비디아, TSMC, SK하이닉스, 각국 정부, 전력 사업자와 자본시장이 어떻게 상호작용하는지 시뮬레이션해주세요.'
   },
   {
     label: '금리 인상',
     topic: 'rates_inflation',
-    question: '연준의 기준금리 경로와 인플레이션 전망 변화가 성장주, 가치주, 금융주에 미치는 차별적 영향을 분석하고 섹터별 포지셔닝 전략을 제시해주세요.'
+    question: '연준의 기준금리 경로 변화에 미국 정부, 은행, 성장 기업, 제조 기업, 가계와 채권시장이 어떻게 반응하고 서로의 의사결정을 바꾸는지 시뮬레이션해주세요.'
   }
 ])
 
