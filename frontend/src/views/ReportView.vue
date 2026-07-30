@@ -1,5 +1,10 @@
 <template>
-  <div class="uf-shell" :class="{ 'graph-fullscreen': drawerMode === 'full' }">
+  <!-- R5 경로 분석 보고서: 장문 독해가 작업 → 덱 우위 + 스테이지는 오버레이 시트 -->
+  <div
+    class="uf-shell uf-shell--deck-lead stage-overlay"
+    :class="{ 'graph-fullscreen': drawerMode === 'full' }"
+    :style="{ '--wm-progress': String(reportProgress) }"
+  >
     <!-- Left Sidebar -->
     <aside class="uf-sidebar">
       <img src="../assets/logo/ungdroo_logo.png" alt="logo" class="uf-sidebar-logo" @click="router.push('/')" />
@@ -61,6 +66,7 @@
             :systemLogs="systemLogs"
             @add-log="addLog"
             @update-status="updateStatus"
+            @update-progress="updateProgress"
           />
         </div>
 
@@ -135,6 +141,13 @@ const addLog = (msg) => {
 
 const updateStatus = (status) => {
   currentStatus.value = status
+}
+
+// 상단 바 진행선 — Step4 가 완료 섹션 / 전체 섹션 비율을 올려준다(0~1)
+const reportProgress = ref(0)
+const updateProgress = (ratio) => {
+  const n = Number(ratio)
+  reportProgress.value = Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0
 }
 
 // --- Data Logic ---

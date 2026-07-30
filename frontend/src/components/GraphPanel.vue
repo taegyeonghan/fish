@@ -1,7 +1,20 @@
 <template>
   <div class="graph-panel">
     <div class="panel-header">
-      <span class="panel-title">{{ $t('graph.panelTitle') }}</span>
+      <!-- 스테이지 HUD: 제목 + 세계 규모(노드/엣지) — 문구는 기존 i18n 키 재사용 -->
+      <div class="header-lead">
+        <span class="panel-title">{{ $t('graph.panelTitle') }}</span>
+        <div v-if="graphData" class="stage-hud">
+          <span class="hud-chip">
+            <span class="hud-value">{{ nodeCount }}</span>
+            <span class="hud-label">{{ $t('step1.entityNodes') }}</span>
+          </span>
+          <span class="hud-chip">
+            <span class="hud-value">{{ edgeCount }}</span>
+            <span class="hud-label">{{ $t('step1.relationEdges') }}</span>
+          </span>
+        </div>
+      </div>
       <!--  (Internal Top Right) -->
       <div class="header-tools">
         <button class="tool-btn" @click="$emit('refresh')" :disabled="loading" :title="$t('graph.refreshGraph')">
@@ -52,7 +65,7 @@
         <div v-if="selectedItem" class="detail-panel">
           <div class="detail-panel-header">
             <span class="detail-title">{{ selectedItem.type === 'node' ? $t('graph.nodeDetails') : $t('graph.relationship') }}</span>
-            <span v-if="selectedItem.type === 'node'" class="detail-type-badge" :style="{ background: selectedItem.color, color: '#fff' }">
+            <span v-if="selectedItem.type === 'node'" class="detail-type-badge" :style="{ background: selectedItem.color, color: 'var(--wm-on-accent)' }">
               {{ selectedItem.entityType }}
             </span>
             <button class="detail-close" @click="closeDetailPanel">×</button>
@@ -280,11 +293,22 @@ const toggleSelfLoop = (id) => {
   expandedSelfLoops.value = newSet
 }
 
+// 스테이지 규모(HUD). 백엔드가 count 를 주면 그것을, 없으면 배열 길이를 쓴다.
+const nodeCount = computed(() => props.graphData?.node_count ?? props.graphData?.nodes?.length ?? 0)
+const edgeCount = computed(() => props.graphData?.edge_count ?? props.graphData?.edges?.length ?? 0)
+
+// 범주형 팔레트 정본은 --wm-cat-1..10 (market-world.css). 인덱스 순서 = 기존 타입→색 대응 보존.
+// var() 문자열을 그대로 쓰면 부모 테마 전환 시 재렌더 없이 색이 따라온다.
+const CAT_COLORS = [
+  'var(--wm-cat-1)', 'var(--wm-cat-2)', 'var(--wm-cat-3)', 'var(--wm-cat-4)', 'var(--wm-cat-5)',
+  'var(--wm-cat-6)', 'var(--wm-cat-7)', 'var(--wm-cat-8)', 'var(--wm-cat-9)', 'var(--wm-cat-10)'
+]
+
 const entityTypes = computed(() => {
   if (!props.graphData?.nodes) return []
   const typeMap = {}
-  const colors = ['#FF6B35', '#004E89', '#7B2D8E', '#1A936F', '#C5283D', '#E9724C', '#3498db', '#9b59b6', '#27ae60', '#f39c12']
-  
+  const colors = CAT_COLORS
+
   props.graphData.nodes.forEach(node => {
     const type = node.labels?.find(l => l !== 'Entity') || 'Entity'
     if (!typeMap[type]) {
@@ -460,22 +484,53 @@ const renderGraph = () => {
   // Color scale
   const colorMap = {}
   entityTypes.value.forEach(t => colorMap[t.name] = t.color)
-  const getColor = (type) => colorMap[type] || '#999'
+  const getColor = (type) => colorMap[type] || 'var(--wm-text-dim)'
 
-  // Simulation - 
+  // ===== 레이아웃을 스테이지 경계로 구속한다 =====
+  // 스테이지는 배치 모드에 따라 약 1090×844(side) ~ 1016×215(band) 까지 변한다.
+  // 고정 파라미터(링크 150 · 충돌 66)는 짧은 띠에서 노드를 컨테이너 밖으로 밀어내
+  // 잘림을 만들었다. 크롬(상단 HUD · 하단 범례/토글)과 라벨 폭을 뺀 가용 박스를
+  // 실제 컨테이너 크기에서 파생하고, tick 에서 좌표를 그 박스 안으로 접는다
+  // (초기 렌더 · 리사이즈 · 토글 재배치 · 드래그 전부 같은 규칙을 통과한다).
+  const NODE_R = 10
+  const clampTo = (v, lo, hi) => (v < lo ? lo : (v > hi ? hi : v))
+  const chromeTop = Math.min(50, height * 0.22)     // 상단 HUD 바
+  const chromeBottom = Math.min(46, height * 0.22)  // 하단 범례 · 엣지라벨 토글
+  const chromeX = Math.min(28, width * 0.06)
+  const labelRoom = Math.min(70, width * 0.12)      // 라벨은 노드 오른쪽으로 뻗는다(dx 14 + 8자)
+  const box = {
+    x0: chromeX + NODE_R,
+    x1: Math.max(chromeX + NODE_R + 1, width - chromeX - NODE_R - labelRoom),
+    y0: chromeTop + NODE_R,
+    y1: Math.max(chromeTop + NODE_R + 1, height - chromeBottom - NODE_R),
+  }
+  const boxW = box.x1 - box.x0
+  const boxH = box.y1 - box.y0
+  const boxCx = (box.x0 + box.x1) / 2
+  const boxCy = (box.y0 + box.y1) / 2
+  // 노드 1개가 쓸 수 있는 정사각 한 변 ÷ 기존 기본 링크 거리(150). 좁을 때만 줄인다
+  // → 넓은 폭에서는 fit === 1 이라 기존 배치가 그대로다(회귀 방지).
+  const fit = Math.min(1, Math.sqrt((boxW * boxH) / nodes.length) / 150)
+  // 박스가 한 축으로 납작하면(밴드) 그 축의 되당김을 키운다 — clamp 에만 맡기면 경계에 쌓인다.
+  // 박스 비율이 2배 이내면 1 이라 넓은 폭에서는 기존 강도(0.04)가 유지된다.
+  const pullX = Math.min(6, Math.max(1, boxH / boxW / 2))
+  const pullY = Math.min(6, Math.max(1, boxW / boxH / 2))
+
+  // Simulation -
   const simulation = d3.forceSimulation(nodes)
     .force('link', d3.forceLink(edges).id(d => d.id).distance(d => {
       //  150， 40
       const baseDistance = 150
       const edgeCount = d.pairTotal || 1
-      return baseDistance + (edgeCount - 1) * 50
+      return (baseDistance + (edgeCount - 1) * 50) * fit
     }))
-    .force('charge', d3.forceManyBody().strength(-400))
-    .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collide', d3.forceCollide(50))
+    .force('charge', d3.forceManyBody().strength(-400 * fit))
+    .force('center', d3.forceCenter(boxCx, boxCy))
+    // 라벨이 노드 오른쪽으로 뻗으므로 충돌 반경을 라벨 폭까지 넓힌다(라벨 겹침 완화)
+    .force('collide', d3.forceCollide(66 * fit))
     // ，
-    .force('x', d3.forceX(width / 2).strength(0.04))
-    .force('y', d3.forceY(height / 2).strength(0.04))
+    .force('x', d3.forceX(boxCx).strength(0.04 * pullX))
+    .force('y', d3.forceY(boxCy).strength(0.04 * pullY))
   
   currentSimulation = simulation
 
@@ -512,6 +567,12 @@ const renderGraph = () => {
     //  - 
     const dx = tx - sx, dy = ty - sy
     const dist = Math.sqrt(dx * dx + dy * dy)
+    // 두 노드가 한 점에 겹칠 수 있다(초기 tick 의 경계 clamp · 같은 모서리로 드래그 ·
+    // 컨테이너 크기 0). dist 가 0 이면 -dy/dist 가 NaN 이 되어 d 속성 자체가 깨지므로
+    // 직선으로 폴백한다 — 겹친 동안은 길이 0 이고, 떨어지는 즉시 곡선으로 돌아온다.
+    if (!(dist > 1e-6)) {
+      return `M${sx},${sy} L${tx},${ty}`
+    }
     // ，，
     // ，
     const pairTotal = d.pairTotal || 1
@@ -542,6 +603,10 @@ const renderGraph = () => {
     //  t=0.5
     const dx = tx - sx, dy = ty - sy
     const dist = Math.sqrt(dx * dx + dy * dy)
+    // getLinkPath 와 같은 이유 — 겹친 노드에서 NaN 좌표(x/y)가 나오지 않게 중점으로 폴백한다.
+    if (!(dist > 1e-6)) {
+      return { x: (sx + tx) / 2, y: (sy + ty) / 2 }
+    }
     const pairTotal = d.pairTotal || 1
     const offsetRatio = 0.25 + pairTotal * 0.05
     const baseOffset = Math.max(35, dist * offsetRatio)
@@ -560,17 +625,15 @@ const renderGraph = () => {
   const link = linkGroup.selectAll('path')
     .data(edges)
     .enter().append('path')
-    .attr('stroke', '#C0C0C0')
+    .style('stroke', 'var(--wm-edge)')
     .attr('stroke-width', 1.5)
     .attr('fill', 'none')
     .style('cursor', 'pointer')
     .on('click', (event, d) => {
       event.stopPropagation()
-      linkGroup.selectAll('path').attr('stroke', '#C0C0C0').attr('stroke-width', 1.5)
-      linkLabelBg.attr('fill', 'rgba(255,255,255,0.95)')
-      linkLabels.attr('fill', '#666')
-      d3.select(event.target).attr('stroke', '#3498db').attr('stroke-width', 3)
-      
+      resetPaint()
+      d3.select(event.target).style('stroke', 'var(--wm-edge-strong)').attr('stroke-width', 3)
+
       selectedItem.value = {
         type: 'edge',
         data: d.rawData
@@ -581,7 +644,8 @@ const renderGraph = () => {
   const linkLabelBg = linkGroup.selectAll('rect')
     .data(edges)
     .enter().append('rect')
-    .attr('fill', 'rgba(255,255,255,0.95)')
+    .style('fill', 'var(--wm-surface)')
+    .style('stroke', 'var(--wm-border)')
     .attr('rx', 3)
     .attr('ry', 3)
     .style('cursor', 'pointer')
@@ -589,12 +653,10 @@ const renderGraph = () => {
     .style('display', showEdgeLabels.value ? 'block' : 'none')
     .on('click', (event, d) => {
       event.stopPropagation()
-      linkGroup.selectAll('path').attr('stroke', '#C0C0C0').attr('stroke-width', 1.5)
-      linkLabelBg.attr('fill', 'rgba(255,255,255,0.95)')
-      linkLabels.attr('fill', '#666')
-      link.filter(l => l === d).attr('stroke', '#3498db').attr('stroke-width', 3)
-      d3.select(event.target).attr('fill', 'rgba(52, 152, 219, 0.1)')
-      
+      resetPaint()
+      link.filter(l => l === d).style('stroke', 'var(--wm-edge-strong)').attr('stroke-width', 3)
+      d3.select(event.target).style('fill', 'var(--wm-accent-soft)').style('stroke', 'var(--wm-accent-border)')
+
       selectedItem.value = {
         type: 'edge',
         data: d.rawData
@@ -607,21 +669,19 @@ const renderGraph = () => {
     .enter().append('text')
     .text(d => d.name)
     .attr('font-size', '9px')
-    .attr('fill', '#666')
+    .style('fill', 'var(--wm-text-muted)')
     .attr('text-anchor', 'middle')
     .attr('dominant-baseline', 'middle')
     .style('cursor', 'pointer')
     .style('pointer-events', 'all')
-    .style('font-family', 'system-ui, sans-serif')
+    .style('font-family', 'var(--wm-mono)')
     .style('display', showEdgeLabels.value ? 'block' : 'none')
     .on('click', (event, d) => {
       event.stopPropagation()
-      linkGroup.selectAll('path').attr('stroke', '#C0C0C0').attr('stroke-width', 1.5)
-      linkLabelBg.attr('fill', 'rgba(255,255,255,0.95)')
-      linkLabels.attr('fill', '#666')
-      link.filter(l => l === d).attr('stroke', '#3498db').attr('stroke-width', 3)
-      d3.select(event.target).attr('fill', '#3498db')
-      
+      resetPaint()
+      link.filter(l => l === d).style('stroke', 'var(--wm-edge-strong)').attr('stroke-width', 3)
+      d3.select(event.target).style('fill', 'var(--wm-edge-strong)')
+
       selectedItem.value = {
         type: 'edge',
         data: d.rawData
@@ -639,8 +699,8 @@ const renderGraph = () => {
     .data(nodes)
     .enter().append('circle')
     .attr('r', 10)
-    .attr('fill', d => getColor(d.type))
-    .attr('stroke', '#fff')
+    .style('fill', d => getColor(d.type))
+    .style('stroke', 'var(--wm-node-stroke)')
     .attr('stroke-width', 2.5)
     .style('cursor', 'pointer')
     .call(d3.drag()
@@ -680,13 +740,12 @@ const renderGraph = () => {
     )
     .on('click', (event, d) => {
       event.stopPropagation()
-      node.attr('stroke', '#fff').attr('stroke-width', 2.5)
-      linkGroup.selectAll('path').attr('stroke', '#C0C0C0').attr('stroke-width', 1.5)
-      d3.select(event.target).attr('stroke', '#E91E63').attr('stroke-width', 4)
+      resetPaint()
+      d3.select(event.target).style('stroke', 'var(--wm-accent)').attr('stroke-width', 4)
       link.filter(l => l.source.id === d.id || l.target.id === d.id)
-        .attr('stroke', '#E91E63')
+        .style('stroke', 'var(--wm-edge-strong)')
         .attr('stroke-width', 2.5)
-      
+
       selectedItem.value = {
         type: 'node',
         data: d.rawData,
@@ -696,29 +755,48 @@ const renderGraph = () => {
     })
     .on('mouseenter', (event, d) => {
       if (!selectedItem.value || selectedItem.value.data?.uuid !== d.rawData.uuid) {
-        d3.select(event.target).attr('stroke', '#333').attr('stroke-width', 3)
+        d3.select(event.target).style('stroke', 'var(--wm-border-strong)').attr('stroke-width', 3)
       }
     })
     .on('mouseleave', (event, d) => {
       if (!selectedItem.value || selectedItem.value.data?.uuid !== d.rawData.uuid) {
-        d3.select(event.target).attr('stroke', '#fff').attr('stroke-width', 2.5)
+        d3.select(event.target).style('stroke', 'var(--wm-node-stroke)').attr('stroke-width', 2.5)
       }
     })
 
-  // Node Labels
+  // Node Labels — 스테이지 배경색 후광(paint-order)으로 격자·엣지 위에서도 읽히게 한다
   const nodeLabels = nodeGroup.selectAll('text')
     .data(nodes)
     .enter().append('text')
     .text(d => d.name.length > 8 ? d.name.substring(0, 8) + '…' : d.name)
     .attr('font-size', '11px')
-    .attr('fill', '#333')
+    .style('fill', 'var(--wm-text)')
+    .style('stroke', 'var(--wm-stage)')
+    .style('stroke-width', '3px')
+    .style('stroke-linejoin', 'round')
+    .style('paint-order', 'stroke')
     .attr('font-weight', '500')
     .attr('dx', 14)
     .attr('dy', 4)
     .style('pointer-events', 'none')
-    .style('font-family', 'system-ui, sans-serif')
+    .style('font-family', 'var(--wm-font)')
+
+  // 선택 해제 시 원래 도색으로 되돌린다(엣지·라벨·노드 한 곳에서 관리)
+  const resetPaint = () => {
+    linkGroup.selectAll('path').style('stroke', 'var(--wm-edge)').attr('stroke-width', 1.5)
+    linkLabelBg.style('fill', 'var(--wm-surface)').style('stroke', 'var(--wm-border)')
+    linkLabels.style('fill', 'var(--wm-text-muted)')
+    node.style('stroke', 'var(--wm-node-stroke)').attr('stroke-width', 2.5)
+  }
 
   simulation.on('tick', () => {
+    // 경계 구속 — force 결과를 스테이지 박스 안으로 접는다. 엣지·라벨은 이 좌표를 읽으므로
+    // 노드·엣지·라벨이 함께 안쪽에 남는다. 드래그(fx/fy)도 같은 한계를 넘지 못한다.
+    nodes.forEach(d => {
+      d.x = clampTo(d.x, box.x0, box.x1)
+      d.y = clampTo(d.y, box.y0, box.y1)
+    })
+
     link.attr('d', d => getLinkPath(d))
     
     // （，）
@@ -753,10 +831,7 @@ const renderGraph = () => {
   
   svg.on('click', () => {
     selectedItem.value = null
-    node.attr('stroke', '#fff').attr('stroke-width', 2.5)
-    linkGroup.selectAll('path').attr('stroke', '#C0C0C0').attr('stroke-width', 1.5)
-    linkLabelBg.attr('fill', 'rgba(255,255,255,0.95)')
-    linkLabels.attr('fill', '#666')
+    resetPaint()
   })
 }
 
@@ -773,16 +848,39 @@ watch(showEdgeLabels, (newVal) => {
   }
 })
 
+// 스테이지 크기는 창 크기뿐 아니라 배치 모드(side/band/전체화면)·접힘으로도 바뀐다.
+// 컨테이너 크기를 직접 관찰해 다시 그린다(연속 변화는 디바운스로 한 번만).
+let resizeObserver = null
+let resizeTimer = null
+
+const scheduleRender = () => {
+  if (resizeTimer) clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(() => {
+    const el = graphContainer.value
+    if (!el || el.clientWidth < 40 || el.clientHeight < 40) return
+    nextTick(renderGraph)
+  }, 160)
+}
+
 const handleResize = () => {
-  nextTick(renderGraph)
+  scheduleRender()
 }
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)
+  if (graphContainer.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(scheduleRender)
+    resizeObserver.observe(graphContainer.value)
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  if (resizeTimer) clearTimeout(resizeTimer)
   if (currentSimulation) {
     currentSimulation.stop()
   }
@@ -790,69 +888,124 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ===== 스테이지(stage) =====
+ * 이 컴포넌트는 곁다리 서랍이 아니라 앱의 주 캔버스다.
+ * 크롬 배치: 상단 HUD 바(제목·규모·도구) / 하단 좌 범례 · 하단 우 엣지라벨 토글 /
+ *            우측 상세 시트(상·하 크롬을 침범하지 않도록 top·bottom 을 비워둔다).
+ * 색은 --wm-* 토큰만 쓴다. 떠 있는 패널의 표면색은 전역 정본(market-world.css)이
+ * !important 로 지정하므로 여기서는 기하와 전역이 안 다루는 색만 지정한다.
+ */
 .graph-panel {
   position: relative;
   width: 100%;
   height: 100%;
-  background-color: #FAFAFA;
-  background-image: radial-gradient(#D0D0D0 1.5px, transparent 1.5px);
+  background-color: var(--wm-stage);
+  background-image: radial-gradient(var(--wm-grid) 1.5px, transparent 1.5px);
   background-size: 24px 24px;
   overflow: hidden;
 }
 
+/* ===== 상단 HUD 바 ===== */
 .panel-header {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  padding: 16px 20px;
+  padding: 9px 14px;
   z-index: 10;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0));
+  gap: 12px;
+  border-bottom: 1px solid var(--wm-border);
+  background: linear-gradient(to bottom, var(--wm-scrim), transparent);
   pointer-events: none;
 }
 
-.panel-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
+.header-lead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  overflow: hidden;
   pointer-events: auto;
+}
+
+.panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wm-text);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+/* 세계 규모 칩 — 스테이지가 스스로 크기를 말한다 */
+.stage-hud {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hud-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-pill);
+  background: var(--wm-surface-2);
+  white-space: nowrap;
+}
+
+.hud-value {
+  font-family: var(--wm-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--wm-accent-text);
+}
+
+.hud-label {
+  font-size: 10px;
+  color: var(--wm-text-muted);
 }
 
 .header-tools {
   pointer-events: auto;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .tool-btn {
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid #E0E0E0;
-  background: #FFF;
-  border-radius: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--wm-border);
+  background: var(--wm-surface-2);
+  border-radius: var(--wm-radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   cursor: pointer;
-  color: #666;
+  color: var(--wm-text-muted);
   transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-  font-size: 13px;
+  box-shadow: var(--wm-shadow-1);
+  font-size: 12px;
 }
 
 .tool-btn:hover {
-  background: #F5F5F5;
-  color: #000;
-  border-color: #CCC;
+  background: var(--wm-accent-soft);
+  color: var(--wm-accent-text);
+  border-color: var(--wm-accent-border);
 }
 
 .tool-btn .btn-text {
-  font-size: 12px;
+  font-size: 11px;
+  font-family: var(--wm-mono);
+  letter-spacing: 0.03em;
 }
 
 .icon-refresh.spinning {
@@ -878,56 +1031,63 @@ onUnmounted(() => {
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  color: #999;
+  color: var(--wm-text-dim);
+  font-size: 13px;
+  padding: 0 16px;
 }
 
 .empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.2;
+  font-size: 40px;
+  margin-bottom: 10px;
+  opacity: 0.25;
+  color: var(--wm-accent-text);
 }
 
-/* Entity Types Legend - Bottom Left */
+.empty-text {
+  margin: 0;
+}
+
+/* ===== 하단 좌: Entity Types 범례 ===== */
 .graph-legend {
   position: absolute;
-  bottom: 24px;
-  left: 24px;
-  background: rgba(255,255,255,0.95);
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid #EAEAEA;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  bottom: 12px;
+  left: 12px;
+  max-width: min(46%, 320px);
+  max-height: 40%;
+  overflow: auto;
+  padding: 9px 12px;
+  border: 1px solid var(--wm-border);
   z-index: 10;
 }
 
 .legend-title {
   display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: #E91E63;
-  margin-bottom: 10px;
+  font-family: var(--wm-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--wm-text-dim);
+  margin-bottom: 8px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.1em;
 }
 
 .legend-items {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 16px;
-  max-width: 320px;
+  gap: 6px 14px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  color: #555;
+  font-size: 11px;
+  color: var(--wm-text-muted);
 }
 
 .legend-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -936,27 +1096,27 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-/* Edge Labels Toggle - Top Right */
+/* ===== 하단 우: 엣지 라벨 토글 (상세 시트와 겹치지 않게 하단으로 내렸다) ===== */
 .edge-labels-toggle {
   position: absolute;
-  top: 60px;
-  right: 20px;
+  bottom: 12px;
+  right: 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: #FFF;
-  padding: 8px 14px;
-  border-radius: 20px;
-  border: 1px solid #E0E0E0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  gap: 9px;
+  padding: 6px 12px;
+  border-radius: var(--wm-radius-pill);
+  border: 1px solid var(--wm-border);
+  box-shadow: var(--wm-shadow-1);
   z-index: 10;
 }
 
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 40px;
-  height: 22px;
+  width: 34px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .toggle-switch input {
@@ -972,49 +1132,50 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #E0E0E0;
-  border-radius: 22px;
+  background-color: var(--wm-surface-3);
+  border-radius: var(--wm-radius-pill);
   transition: 0.3s;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 16px;
-  width: 16px;
+  height: 12px;
+  width: 12px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
+  background-color: var(--wm-text);
   border-radius: 50%;
   transition: 0.3s;
 }
 
+/* 전역 임베드 시트가 .slider 배경을 !important 로 고정하므로 활성 상태는 여기서 되찾는다 */
 input:checked + .slider {
-  background-color: #7B2D8E;
+  background-color: var(--wm-accent) !important;
 }
 
 input:checked + .slider:before {
-  transform: translateX(18px);
+  transform: translateX(16px);
+  background-color: var(--wm-on-accent);
 }
 
 .toggle-label {
-  font-size: 12px;
-  color: #666;
+  font-size: 11px;
+  color: var(--wm-text-muted);
+  white-space: nowrap;
 }
 
-/* Detail Panel - Right Side */
+/* ===== 우측 상세 시트 ===== */
 .detail-panel {
   position: absolute;
-  top: 60px;
-  right: 20px;
-  width: 320px;
-  max-height: calc(100% - 100px);
-  background: #FFF;
-  border: 1px solid #EAEAEA;
-  border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  top: 54px;
+  right: 12px;
+  bottom: 54px;
+  width: clamp(240px, 32%, 340px);
+  border: 1px solid var(--wm-border);
+  box-shadow: var(--wm-shadow-2);
   overflow: hidden;
-  font-family: 'Noto Sans SC', system-ui, sans-serif;
+  font-family: var(--wm-font);
   font-size: 13px;
   z-index: 20;
   display: flex;
@@ -1025,25 +1186,24 @@ input:checked + .slider:before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
-  background: #FAFAFA;
-  border-bottom: 1px solid #EEE;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--wm-border);
   flex-shrink: 0;
 }
 
 .detail-title {
   font-weight: 600;
-  color: #333;
-  font-size: 14px;
+  color: var(--wm-text);
+  font-size: 13px;
 }
 
 .detail-type-badge {
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: var(--wm-radius-pill);
+  font-size: 10px;
+  font-weight: 600;
   margin-left: auto;
-  margin-right: 12px;
+  margin-right: 10px;
 }
 
 .detail-close {
@@ -1051,18 +1211,18 @@ input:checked + .slider:before {
   border: none;
   font-size: 20px;
   cursor: pointer;
-  color: #999;
+  color: var(--wm-text-dim);
   line-height: 1;
   padding: 0;
   transition: color 0.2s;
 }
 
 .detail-close:hover {
-  color: #333;
+  color: var(--wm-text);
 }
 
 .detail-content {
-  padding: 16px;
+  padding: 14px;
   overflow-y: auto;
   flex: 1;
 }
@@ -1075,40 +1235,42 @@ input:checked + .slider:before {
 }
 
 .detail-label {
-  color: #888;
-  font-size: 12px;
+  color: var(--wm-text-muted);
+  font-size: 11px;
   font-weight: 500;
-  min-width: 80px;
+  min-width: 74px;
 }
 
 .detail-value {
-  color: #333;
+  color: var(--wm-text);
   flex: 1;
   word-break: break-word;
 }
 
 .detail-value.uuid-text {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--wm-mono);
   font-size: 11px;
-  color: #666;
+  color: var(--wm-text-muted);
 }
 
 .detail-value.fact-text {
   line-height: 1.5;
-  color: #444;
+  color: var(--wm-text-muted);
 }
 
 .detail-section {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid #F0F0F0;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--wm-border-soft);
 }
 
 .section-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: #666;
-  margin-bottom: 10px;
+  color: var(--wm-text-muted);
+  margin-bottom: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .properties-list {
@@ -1123,36 +1285,36 @@ input:checked + .slider:before {
 }
 
 .property-key {
-  color: #888;
+  color: var(--wm-text-muted);
   font-weight: 500;
-  min-width: 90px;
+  min-width: 86px;
 }
 
 .property-value {
-  color: #333;
+  color: var(--wm-text);
   flex: 1;
 }
 
 .summary-text {
   line-height: 1.6;
-  color: #444;
+  color: var(--wm-text-muted);
   font-size: 12px;
 }
 
 .labels-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .label-tag {
   display: inline-block;
-  padding: 4px 12px;
-  background: #F5F5F5;
-  border: 1px solid #E0E0E0;
-  border-radius: 16px;
+  padding: 3px 10px;
+  background: var(--wm-surface-2);
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-pill);
   font-size: 11px;
-  color: #555;
+  color: var(--wm-text-muted);
 }
 
 .episodes-list {
@@ -1163,49 +1325,49 @@ input:checked + .slider:before {
 
 .episode-tag {
   display: inline-block;
-  padding: 6px 10px;
-  background: #F8F8F8;
-  border: 1px solid #E8E8E8;
-  border-radius: 6px;
-  font-family: 'JetBrains Mono', monospace;
+  padding: 5px 9px;
+  background: var(--wm-surface-2);
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-sm);
+  font-family: var(--wm-mono);
   font-size: 10px;
-  color: #666;
+  color: var(--wm-text-muted);
   word-break: break-all;
 }
 
 /* Edge relation header */
 .edge-relation-header {
-  background: #F8F8F8;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-size: 13px;
+  padding: 11px 12px;
+  border: 1px solid var(--wm-border);
+  margin-bottom: 14px;
+  font-size: 12px;
   font-weight: 500;
-  color: #333;
+  color: var(--wm-text);
   line-height: 1.5;
   word-break: break-word;
 }
 
-/* Building hint */
+/* ===== 상태 힌트(하단 중앙) ===== */
 .graph-building-hint {
   position: absolute;
-  bottom: 160px; /* Moved up from 80px */
+  bottom: 58px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.65);
+  background: var(--wm-scrim);
   backdrop-filter: blur(8px);
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 30px;
-  font-size: 13px;
+  color: var(--wm-text);
+  padding: 8px 16px;
+  border-radius: var(--wm-radius-pill);
+  font-size: 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 9px;
+  box-shadow: var(--wm-shadow-2);
+  border: 1px solid var(--wm-border);
   font-weight: 500;
-  letter-spacing: 0.5px;
-  z-index: 100;
+  letter-spacing: 0.02em;
+  max-width: calc(100% - 32px);
+  z-index: 30;
 }
 
 .memory-icon-wrapper {
@@ -1216,20 +1378,19 @@ input:checked + .slider:before {
 }
 
 .memory-icon {
-  width: 18px;
-  height: 18px;
-  color: #4CAF50;
+  width: 16px;
+  height: 16px;
+  color: var(--wm-accent-text);
 }
 
 @keyframes breathe {
-  0%, 100% { opacity: 0.7; transform: scale(1); filter: drop-shadow(0 0 2px rgba(76, 175, 80, 0.3)); }
-  50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(76, 175, 80, 0.6)); }
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
 }
 
-/*  */
 .graph-building-hint.finished-hint {
-  background: rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--wm-scrim);
+  border: 1px solid var(--wm-border);
 }
 
 .finished-hint .hint-icon-wrapper {
@@ -1239,134 +1400,135 @@ input:checked + .slider:before {
 }
 
 .finished-hint .hint-icon {
-  width: 18px;
-  height: 18px;
-  color: #FFF;
+  width: 16px;
+  height: 16px;
+  color: var(--wm-warn);
 }
 
 .finished-hint .hint-text {
   flex: 1;
-  white-space: nowrap;
+  min-width: 0;
 }
 
 .hint-close-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  background: rgba(255, 255, 255, 0.2);
+  width: 20px;
+  height: 20px;
+  background: var(--wm-surface-3);
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  color: #FFF;
+  color: var(--wm-text-muted);
   transition: all 0.2s;
-  margin-left: 8px;
+  margin-left: 6px;
   flex-shrink: 0;
 }
 
 .hint-close-btn:hover {
-  background: rgba(255, 255, 255, 0.35);
-  transform: scale(1.1);
+  background: var(--wm-accent-soft);
+  color: var(--wm-accent-text);
 }
 
 /* Loading spinner */
 .loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #E0E0E0;
-  border-top-color: #7B2D8E;
+  width: 34px;
+  height: 34px;
+  border: 3px solid var(--wm-border);
+  border-top-color: var(--wm-accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 16px;
+  margin: 0 auto 14px;
 }
 
-/* Self-loop styles */
+/* ===== 자기참조 관계(self-loop) — 보조 강조 --wm-alt 계열 ===== */
 .self-loop-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #E8F5E9 0%, #F1F8E9 100%);
-  border: 1px solid #C8E6C9;
+  background: var(--wm-alt-soft);
+  border: 1px solid var(--wm-border);
 }
 
 .self-loop-count {
   margin-left: auto;
   font-size: 11px;
-  color: #666;
-  background: rgba(255,255,255,0.8);
+  color: var(--wm-text-muted);
+  background: var(--wm-surface-2);
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: var(--wm-radius-pill);
 }
 
 .self-loop-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .self-loop-item {
-  background: #FAFAFA;
-  border: 1px solid #EAEAEA;
-  border-radius: 8px;
+  background: var(--wm-surface-2);
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-sm);
 }
 
 .self-loop-item-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
-  background: #F5F5F5;
+  padding: 9px 11px;
+  background: var(--wm-surface-2);
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .self-loop-item-header:hover {
-  background: #EEEEEE;
+  background: var(--wm-surface-3);
 }
 
 .self-loop-item.expanded .self-loop-item-header {
-  background: #E8E8E8;
+  background: var(--wm-surface-3);
 }
 
 .self-loop-index {
+  font-family: var(--wm-mono);
   font-size: 10px;
   font-weight: 600;
-  color: #888;
-  background: #E0E0E0;
+  color: var(--wm-text-muted);
+  background: var(--wm-surface-3);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--wm-radius-sm);
 }
 
 .self-loop-name {
   font-size: 12px;
   font-weight: 500;
-  color: #333;
+  color: var(--wm-text);
   flex: 1;
 }
 
 .self-loop-toggle {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #888;
-  background: #E0E0E0;
-  border-radius: 4px;
+  color: var(--wm-text-muted);
+  background: var(--wm-surface-3);
+  border-radius: var(--wm-radius-sm);
   transition: all 0.2s;
 }
 
 .self-loop-item.expanded .self-loop-toggle {
-  background: #D0D0D0;
-  color: #666;
+  color: var(--wm-accent-text);
+  background: var(--wm-accent-soft);
 }
 
 .self-loop-item-content {
-  padding: 12px;
-  border-top: 1px solid #EAEAEA;
+  padding: 11px;
+  border-top: 1px solid var(--wm-border-soft);
 }
 
 .self-loop-item-content .detail-row {
@@ -1375,7 +1537,7 @@ input:checked + .slider:before {
 
 .self-loop-item-content .detail-label {
   font-size: 11px;
-  min-width: 60px;
+  min-width: 58px;
 }
 
 .self-loop-item-content .detail-value {
@@ -1395,5 +1557,73 @@ input:checked + .slider:before {
 .episode-tag.small {
   padding: 3px 6px;
   font-size: 9px;
+}
+
+/* ===== band 모드(≤1180 = 임베드 패널): 스테이지가 낮고 넓은 띠가 된다 ===== */
+@media (max-width: 1180px) {
+  .panel-header {
+    padding: 7px 10px;
+    gap: 8px;
+  }
+
+  .header-lead {
+    gap: 10px;
+  }
+
+  .tool-btn {
+    height: 26px;
+    padding: 0 8px;
+  }
+
+  .graph-legend {
+    bottom: 10px;
+    left: 10px;
+    max-width: min(52%, 300px);
+    max-height: 44%;
+    padding: 7px 10px;
+  }
+
+  .graph-legend .legend-items {
+    gap: 5px 10px;
+  }
+
+  .edge-labels-toggle {
+    bottom: 10px;
+    right: 10px;
+    padding: 5px 10px;
+  }
+
+  .detail-panel {
+    top: 46px;
+    bottom: 46px;
+    right: 10px;
+    width: clamp(220px, 34%, 300px);
+  }
+
+  .graph-building-hint {
+    bottom: 50px;
+    font-size: 11px;
+    padding: 7px 13px;
+  }
+
+  .empty-icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+  }
+
+  .graph-state {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 720px) {
+  .hud-label,
+  .toggle-label {
+    display: none;
+  }
+
+  .tool-btn .btn-text {
+    display: none;
+  }
 }
 </style>

@@ -286,9 +286,15 @@ watch(() => props.systemLogs.length, () => {
 </script>
 
 <style scoped>
+/* ===== 덱(deck) = 빌드 원장(ledger) =====
+ * 스테이지가 주 캔버스가 됐으므로 이 패널은 "큰 카드 3장"이 아니라
+ * 상태 칩 + 요약이 붙은 행(row) 묶음으로 압축한다.
+ * 덱이 전폭이 되는 band 모드(≤1180)에서는 auto-fit 으로 2열까지 펼친다.
+ * 색은 --wm-* 토큰만 쓴다(표면·배지 색 일부는 전역 정본이 !important 로 지정).
+ */
 .workbench-panel {
   height: 100%;
-  background-color: #FAFAFA;
+  background: var(--wm-bg);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -297,89 +303,121 @@ watch(() => props.systemLogs.length, () => {
 
 .scroll-container {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  align-content: start;
+  gap: 12px;
 }
 
+/* 원장 행 */
 .step-card {
-  background: #FFF;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  border: 1px solid #EAEAEA;
-  transition: all 0.3s ease;
+  background: var(--wm-surface);
+  border-radius: var(--wm-radius-md);
+  padding: 13px 15px;
+  box-shadow: var(--wm-shadow-1);
+  border: 1px solid var(--wm-border);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   position: relative; /* For absolute overlay */
+  align-self: start;
 }
 
 .step-card.active {
-  border-color: #FF5722;
-  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.08);
+  border-color: var(--wm-accent-border);
+  box-shadow: inset 3px 0 var(--wm-accent), var(--wm-shadow-2);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 9px;
 }
 
 .step-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
+  min-width: 0;
 }
 
 .step-num {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 20px;
+  font-family: var(--wm-mono);
+  font-size: 11px;
   font-weight: 700;
-  color: #E0E0E0;
+  color: var(--wm-text-dim);
+  padding: 3px 7px;
+  border-radius: var(--wm-radius-sm);
+  background: var(--wm-surface-2);
+  flex-shrink: 0;
 }
 
 .step-card.active .step-num,
 .step-card.completed .step-num {
-  color: #000;
+  color: var(--wm-accent-text);
+  background: var(--wm-accent-soft);
 }
 
 .step-title {
   font-weight: 600;
-  font-size: 14px;
-  letter-spacing: 0.5px;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  color: var(--wm-text);
 }
 
 .badge {
-  font-size: 10px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-weight: 600;
+  font-size: 9px;
+  padding: 3px 7px;
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-sm);
+  font-family: var(--wm-mono);
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.badge.success { background: #E8F5E9; color: #2E7D32; }
-.badge.processing { background: #FF5722; color: #FFF; }
-.badge.accent { background: #FF5722; color: #FFF; }
-.badge.pending { background: #F5F5F5; color: #999; }
+.badge.success,
+.badge.processing,
+.badge.accent {
+  background: var(--wm-accent-soft);
+  color: var(--wm-accent-text);
+  border-color: var(--wm-accent-border);
+}
+
+.badge.pending { background: var(--wm-surface-2); color: var(--wm-text-dim); }
 
 .api-note {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  color: #999;
-  margin-bottom: 8px;
+  font-family: var(--wm-mono);
+  font-size: 9px;
+  color: var(--wm-text-dim);
+  letter-spacing: 0.02em;
+  margin: 0 0 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .description {
   font-size: 12px;
-  color: #666;
-  line-height: 1.5;
-  margin-bottom: 16px;
+  color: var(--wm-text-muted);
+  line-height: 1.55;
+  margin: 0 0 12px;
+}
+
+/* 진행 중이 아닌 행은 요약만 남긴다(현재 행은 전문 유지) */
+.step-card:not(.active) .description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Step 01 Tags */
 .tags-container {
-  margin-top: 12px;
+  margin-top: 10px;
   transition: opacity 0.3s;
 }
 
@@ -390,26 +428,28 @@ watch(() => props.systemLogs.length, () => {
 
 .tag-label {
   display: block;
-  font-size: 10px;
-  color: #AAA;
-  margin-bottom: 8px;
-  font-weight: 600;
+  font-family: var(--wm-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--wm-text-dim);
+  margin-bottom: 7px;
+  font-weight: 700;
 }
 
 .tags-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .entity-tag {
-  background: #F5F5F5;
-  border: 1px solid #EEE;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 11px;
-  color: #333;
-  font-family: 'JetBrains Mono', monospace;
+  background: var(--wm-surface-2);
+  border: 1px solid var(--wm-border);
+  padding: 3px 8px;
+  border-radius: var(--wm-radius-sm);
+  font-size: 10px;
+  color: var(--wm-text-muted);
+  font-family: var(--wm-mono);
   transition: all 0.2s;
 }
 
@@ -418,23 +458,24 @@ watch(() => props.systemLogs.length, () => {
 }
 
 .entity-tag.clickable:hover {
-    background: #E0E0E0;
-    border-color: #CCC;
+    background: var(--wm-accent-soft);
+    border-color: var(--wm-accent-border);
+    color: var(--wm-accent-text);
 }
 
 /* Ontology Detail Overlay */
 .ontology-detail-overlay {
     position: absolute;
-    top: 60px; /* Below header roughly */
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
-    background: rgba(255, 255, 255, 0.98);
+    top: 48px;
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    background: var(--wm-surface);
     backdrop-filter: blur(4px);
     z-index: 10;
-    border: 1px solid #EAEAEA;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    border-radius: 6px;
+    border: 1px solid var(--wm-border);
+    box-shadow: var(--wm-shadow-2);
+    border-radius: var(--wm-radius-md);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -447,77 +488,85 @@ watch(() => props.systemLogs.length, () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid #EAEAEA;
-    background: #FAFAFA;
+    padding: 10px 13px;
+    border-bottom: 1px solid var(--wm-border);
+    background: var(--wm-surface-2);
 }
 
 .detail-title-group {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
 }
 
 .detail-type-badge {
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
-    color: #FFF;
-    background: #000;
+    letter-spacing: 0.06em;
+    color: var(--wm-on-accent);
+    background: var(--wm-accent);
     padding: 2px 6px;
-    border-radius: 2px;
+    border-radius: var(--wm-radius-sm);
     text-transform: uppercase;
+    flex-shrink: 0;
 }
 
 .detail-name {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
+    color: var(--wm-text);
+    font-family: var(--wm-mono);
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .close-btn {
     background: none;
     border: none;
     font-size: 18px;
-    color: #999;
+    color: var(--wm-text-dim);
     cursor: pointer;
     line-height: 1;
 }
 
 .close-btn:hover {
-    color: #333;
+    color: var(--wm-text);
 }
 
 .detail-body {
     flex: 1;
     overflow-y: auto;
-    padding: 16px;
+    padding: 14px;
 }
 
 .detail-desc {
     font-size: 12px;
-    color: #444;
-    line-height: 1.5;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px dashed #EAEAEA;
+    color: var(--wm-text-muted);
+    line-height: 1.55;
+    margin-bottom: 14px;
+    padding-bottom: 11px;
+    border-bottom: 1px dashed var(--wm-border-soft);
 }
 
 .detail-section {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
 .section-label {
     display: block;
-    font-size: 10px;
-    font-weight: 600;
-    color: #AAA;
-    margin-bottom: 8px;
+    font-family: var(--wm-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--wm-text-dim);
+    margin-bottom: 7px;
 }
 
 .attr-list, .conn-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
 .attr-item {
@@ -526,24 +575,24 @@ watch(() => props.systemLogs.length, () => {
     flex-wrap: wrap;
     gap: 6px;
     align-items: baseline;
-    padding: 4px;
-    background: #F9F9F9;
-    border-radius: 4px;
+    padding: 5px 7px;
+    background: var(--wm-surface-2);
+    border-radius: var(--wm-radius-sm);
 }
 
 .attr-name {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--wm-mono);
     font-weight: 600;
-    color: #000;
+    color: var(--wm-text);
 }
 
 .attr-type {
-    color: #999;
+    color: var(--wm-text-dim);
     font-size: 10px;
 }
 
 .attr-desc {
-    color: #555;
+    color: var(--wm-text-muted);
     flex: 1;
     min-width: 150px;
 }
@@ -555,140 +604,161 @@ watch(() => props.systemLogs.length, () => {
 }
 
 .example-tag {
-    font-size: 11px;
-    background: #FFF;
-    border: 1px solid #E0E0E0;
+    font-size: 10px;
+    background: var(--wm-surface-2);
+    border: 1px solid var(--wm-border);
     padding: 3px 8px;
-    border-radius: 12px;
-    color: #555;
+    border-radius: var(--wm-radius-pill);
+    color: var(--wm-text-muted);
 }
 
 .conn-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 11px;
-    padding: 6px;
-    background: #F5F5F5;
-    border-radius: 4px;
-    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 5px 7px;
+    background: var(--wm-surface-2);
+    border-radius: var(--wm-radius-sm);
+    font-family: var(--wm-mono);
 }
 
 .conn-node {
     font-weight: 600;
-    color: #333;
+    color: var(--wm-text);
 }
 
 .conn-arrow {
-    color: #BBB;
+    color: var(--wm-accent-text);
 }
 
-/* Step 02 Stats */
+/* Step 02 Stats — 원장 한 줄에 붙는 수치 묶음 */
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-  background: #F9F9F9;
-  padding: 16px;
-  border-radius: 6px;
+  gap: 8px;
+  background: var(--wm-surface-2);
+  border: 1px solid var(--wm-border-soft);
+  padding: 10px 12px;
+  border-radius: var(--wm-radius-sm);
 }
 
 .stat-card {
   text-align: center;
+  min-width: 0;
 }
 
 .stat-value {
   display: block;
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 700;
-  color: #000;
-  font-family: 'JetBrains Mono', monospace;
+  color: var(--wm-text);
+  font-family: var(--wm-mono);
+  line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 9px;
-  color: #999;
+  font-size: 8.5px;
+  color: var(--wm-text-dim);
   text-transform: uppercase;
-  margin-top: 4px;
+  letter-spacing: 0.05em;
+  margin-top: 3px;
   display: block;
 }
 
 /* Step 03 Button */
 .action-btn {
   width: 100%;
-  background: #000;
-  color: #FFF;
-  border: none;
-  padding: 14px;
-  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--wm-accent);
+  color: var(--wm-on-accent);
+  border: 1px solid var(--wm-accent);
+  padding: 12px;
+  border-radius: var(--wm-radius-sm);
+  font-family: var(--wm-font);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
 }
 
 .action-btn:hover:not(:disabled) {
-  opacity: 0.8;
+  background: var(--wm-accent-hover);
 }
 
 .action-btn:disabled {
-  background: #CCC;
+  background: var(--wm-surface-2);
+  border-color: var(--wm-border);
+  color: var(--wm-text-dim);
   cursor: not-allowed;
 }
 
 .progress-section {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   font-size: 12px;
-  color: #FF5722;
-  margin-bottom: 12px;
-  margin-top: 12px;
+  color: var(--wm-accent-text);
+  margin-bottom: 10px;
+  margin-top: 10px;
 }
 
 .build-note {
   font-size: 11px;
-  color: #999;
+  color: var(--wm-text-dim);
   line-height: 1.5;
   margin-top: 4px;
 }
 
 .spinner-sm {
-  width: 14px;
-  height: 14px;
-  border: 2px solid #FFCCBC;
-  border-top-color: #FF5722;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--wm-border);
+  border-top-color: var(--wm-accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  flex-shrink: 0;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* System Logs */
+/* ===== 로그 독 — 덱 마지막 자식으로 in-flow(오버레이 금지) ===== */
 .system-logs {
-  background: #000;
-  color: #DDD;
-  padding: 16px;
-  font-family: 'JetBrains Mono', monospace;
-  border-top: 1px solid #222;
+  background: var(--wm-stage);
+  color: var(--wm-text-muted);
+  padding: 10px 14px;
+  font-family: var(--wm-mono);
+  border-top: 1px solid var(--wm-border);
   flex-shrink: 0;
 }
 
 .log-header {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid #333;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-  font-size: 10px;
-  color: #888;
+  gap: 12px;
+  border-bottom: 1px solid var(--wm-border);
+  padding-bottom: 7px;
+  margin-bottom: 7px;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--wm-text-dim);
+}
+
+.log-id {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .log-content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  height: 80px; /* Approx 4 lines visible */
+  gap: 3px;
+  height: auto;
+  max-height: 108px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -698,24 +768,34 @@ watch(() => props.systemLogs.length, () => {
 }
 
 .log-content::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--wm-border-strong);
   border-radius: 2px;
 }
 
 .log-line {
-  font-size: 11px;
+  font-size: 10.5px;
   display: flex;
-  gap: 12px;
+  gap: 10px;
   line-height: 1.5;
 }
 
 .log-time {
-  color: #666;
-  min-width: 75px;
+  color: var(--wm-text-dim);
+  min-width: 70px;
 }
 
 .log-msg {
-  color: #CCC;
+  color: var(--wm-text-muted);
   word-break: break-all;
+}
+
+@media (max-width: 1180px) {
+  .scroll-container {
+    gap: 10px;
+  }
+
+  .log-content {
+    max-height: 88px;
+  }
 }
 </style>

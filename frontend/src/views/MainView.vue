@@ -1,5 +1,11 @@
 <template>
-  <div class="uf-shell" :class="{ 'graph-fullscreen': drawerMode === 'full' }">
+  <!-- /process = 세계가 생성되는 화면 → 스테이지 우위(uf-shell--stage-lead).
+       상단 바 진행선은 --wm-progress(0~1) 로 셸에 준다. -->
+  <div
+    class="uf-shell uf-shell--stage-lead"
+    :class="{ 'graph-fullscreen': drawerMode === 'full' }"
+    :style="{ '--wm-progress': buildProgressRatio }"
+  >
     <!-- Left Sidebar -->
     <aside class="uf-sidebar">
       <img src="../assets/logo/ungdroo_logo.png" alt="logo" class="uf-sidebar-logo" @click="router.push('/')" />
@@ -82,7 +88,10 @@
           />
         </div>
 
-        <aside class="uf-drawer" :class="{ collapsed: drawerMode === 'hidden', expanded: drawerMode === 'full' }">
+        <aside
+          class="uf-drawer"
+          :class="{ collapsed: drawerMode === 'hidden', expanded: drawerMode === 'full', 'is-empty': !graphData }"
+        >
           <GraphPanel
             :graphData="graphData"
             :loading="graphLoading"
@@ -134,6 +143,12 @@ const statusClass = computed(() => {
   if (error.value) return 'error'
   if (currentPhase.value >= 2) return 'completed'
   return 'processing'
+})
+
+// 상단 바 진행선: Step1 은 3단(온톨로지·빌드·완료) 중 현재 단계, Step2 로 넘어가면 만료(1)
+const buildProgressRatio = computed(() => {
+  if (currentStep.value >= 2) return 1
+  return Math.min(1, Math.max(0, (currentPhase.value + 1) / 3))
 })
 
 const statusText = computed(() => {
@@ -385,4 +400,14 @@ onUnmounted(() => { stopPolling(); stopGraphPolling() })
 
 <style>
 @import '../assets/layout.css';
+</style>
+
+<style scoped>
+/* layout.css 의 변형 클래스 규칙(`.uf-shell--stage-lead > .uf-main .uf-drawer`, 특이도 0,3,0)이
+   `.uf-drawer.is-empty`(0,2,0)를 이겨서 side 모드에서 빈 상태가 먹지 않는다.
+   이 화면 안에서만 특이도를 올려 되찾는다.
+   (접힘은 layout.css 가 `.uf-shell > .uf-main .uf-drawer.collapsed` 로 전역 처리한다.) */
+.uf-shell--stage-lead > .uf-main .uf-drawer.is-empty:not(.collapsed) {
+  flex: 0 1 clamp(240px, 24%, 340px);
+}
 </style>

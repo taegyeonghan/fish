@@ -1,5 +1,11 @@
 <template>
-  <div class="uf-shell" :class="{ 'graph-fullscreen': drawerMode === 'full' }">
+  <!-- R6 세계 탐색: 대화가 작업 → 덱 우위 + 스테이지는 요청 시 오버레이로 소환.
+       파이프라인(1~5)은 여기서 끝이므로 진행선은 완주(1) 상태로 둔다. -->
+  <div
+    class="uf-shell uf-shell--deck-lead stage-overlay"
+    :class="{ 'graph-fullscreen': drawerMode === 'full' }"
+    style="--wm-progress: 1"
+  >
     <!-- Left Sidebar -->
     <aside class="uf-sidebar">
       <img src="../assets/logo/ungdroo_logo.png" alt="logo" class="uf-sidebar-logo" @click="router.push('/')" />

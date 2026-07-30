@@ -9,6 +9,9 @@ Thumbs.db
 .env.development
 .env.test
 .env.production
+# 예외: 프론트 운영 빌드 설정은 비밀값이 아니라 배포 경로(base·API prefix)다.
+# 리포에 없으면 npm run build 가 개발용 localhost 기본값을 번들에 굳힌다.
+!frontend/.env.production
 
 # Python
 __pycache__/
@@ -58,3 +61,5 @@ backend/uploads/
 
 # Docker 数据
 data/
+# 에이전트 작업 산출물(스크린샷 62MB 등) — 정본 설계는 docs/ 로 옮겼다
+.agents/

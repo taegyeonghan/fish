@@ -311,7 +311,7 @@ const props = defineProps({
   systemLogs: Array
 })
 
-const emit = defineEmits(['go-back', 'next-step', 'add-log', 'update-status'])
+const emit = defineEmits(['go-back', 'next-step', 'add-log', 'update-status', 'update-progress'])
 
 const router = useRouter()
 
@@ -358,6 +358,16 @@ const twitterElapsedTime = computed(() => {
 const redditElapsedTime = computed(() => {
   return formatElapsedTime(runStatus.value.reddit_current_round || 0)
 })
+
+// 상단 바 진행선용 — 두 플랫폼 중 앞선 라운드 / 전체 라운드 (없으면 0)
+const roundProgress = computed(() => {
+  const total = runStatus.value.total_rounds || props.maxRounds || 0
+  if (!total) return 0
+  const done = Math.max(runStatus.value.twitter_current_round || 0, runStatus.value.reddit_current_round || 0)
+  return Math.min(1, done / total)
+})
+
+watch(roundProgress, (v) => emit('update-progress', v), { immediate: true })
 
 // Methods
 const addLog = (msg) => {
@@ -694,26 +704,39 @@ onUnmounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #FFFFFF;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  background: var(--wm-bg);
+  font-family: var(--wm-font);
   overflow: hidden;
 }
 
-/* --- Control Bar --- */
+/* --- Control Bar ---
+   덱 상단에 고정되는 컨트롤 바. 덱이 좁아지면(balanced 모드 ~460px) 한 줄에
+   들어가지 않으므로 줄바꿈을 허용한다. 스크롤 영역은 .main-content-area 뿐이라
+   이 바는 이미 항상 덱 최상단에 머문다(sticky 불필요). */
 .control-bar {
-  background: #FFF;
-  padding: 12px 24px;
+  background: var(--wm-surface);
+  padding: 10px var(--wm-gutter);
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #EAEAEA;
+  gap: 10px;
+  border-bottom: 1px solid var(--wm-border);
   z-index: 10;
-  height: 64px;
+  min-height: 64px;
+  flex-shrink: 0;
 }
 
 .status-group {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.action-controls {
+  flex: 0 0 auto;
 }
 
 /* Platform Status Cards */
@@ -723,25 +746,26 @@ onUnmounted(() => {
   gap: 4px;
   padding: 6px 12px;
   border-radius: 4px;
-  background: #FAFAFA;
-  border: 1px solid #EAEAEA;
+  background: var(--wm-surface);
+  border: 1px solid var(--wm-border);
   opacity: 0.7;
   transition: all 0.3s;
-  min-width: 140px;
+  flex: 0 1 auto;
+  min-width: 148px;
   position: relative;
   cursor: pointer;
 }
 
 .platform-status.active {
   opacity: 1;
-  border-color: #333;
-  background: #FFF;
+  border-color: var(--wm-accent-border);
+  background: var(--wm-surface);
 }
 
 .platform-status.completed {
   opacity: 1;
-  border-color: #1A936F;
-  background: #F2FAF6;
+  border-color: var(--wm-pos);
+  background: var(--wm-pos-soft);
 }
 
 /* Actions Tooltip */
@@ -752,10 +776,10 @@ onUnmounted(() => {
   transform: translateX(-50%);
   margin-top: 8px;
   padding: 10px 14px;
-  background: #000;
-  color: #FFF;
+  background: var(--wm-surface-3);
+  color: var(--wm-text);
   border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--wm-shadow-2);
   opacity: 0;
   visibility: hidden;
   transition: all 0.2s ease;
@@ -772,7 +796,7 @@ onUnmounted(() => {
   transform: translateX(-50%);
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-bottom: 6px solid #000;
+  border-bottom: 6px solid var(--wm-surface-3);
 }
 
 .platform-status:hover .actions-tooltip {
@@ -783,7 +807,7 @@ onUnmounted(() => {
 .tooltip-title {
   font-size: 10px;
   font-weight: 600;
-  color: #999;
+  color: var(--wm-text-dim);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 8px;
@@ -799,9 +823,9 @@ onUnmounted(() => {
   font-size: 10px;
   font-weight: 600;
   padding: 3px 8px;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--wm-surface);
   border-radius: 2px;
-  color: #FFF;
+  color: var(--wm-text);
   letter-spacing: 0.03em;
 }
 
@@ -815,13 +839,13 @@ onUnmounted(() => {
 .platform-name {
   font-size: 11px;
   font-weight: 700;
-  color: #000;
+  color: var(--wm-text);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.platform-status.twitter .platform-icon { color: #000; }
-.platform-status.reddit .platform-icon { color: #000; }
+.platform-status.twitter .platform-icon { color: var(--wm-text); }
+.platform-status.reddit .platform-icon { color: var(--wm-text); }
 
 .platform-stats {
   display: flex;
@@ -836,7 +860,7 @@ onUnmounted(() => {
 
 .stat-label {
   font-size: 8px;
-  color: #999;
+  color: var(--wm-text-dim);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -845,18 +869,18 @@ onUnmounted(() => {
 .stat-value {
   font-size: 11px;
   font-weight: 600;
-  color: #333;
+  color: var(--wm-text);
 }
 
 .stat-total, .stat-unit {
   font-size: 9px;
-  color: #999;
+  color: var(--wm-text-dim);
   font-weight: 400;
 }
 
 .status-badge {
   margin-left: auto;
-  color: #1A936F;
+  color: var(--wm-pos);
   display: flex;
   align-items: center;
 }
@@ -878,12 +902,12 @@ onUnmounted(() => {
 }
 
 .action-btn.primary {
-  background: #000;
-  color: #FFF;
+  background: var(--wm-accent);
+  color: var(--wm-on-accent);
 }
 
 .action-btn.primary:hover:not(:disabled) {
-  background: #333;
+  background: var(--wm-accent-hover);
 }
 
 .action-btn:disabled {
@@ -891,22 +915,26 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 
-/* --- Main Content Area --- */
+/* --- Main Content Area ---
+   덱 폭에 따라 타임라인 배치가 갈리므로 컨테이너 쿼리 기준점을 여기에 둔다.
+   (band 모드에선 덱이 전폭 ~1016px, side/balanced 에선 ~460px 이라 뷰포트 폭으로는
+    판단할 수 없다 — 좁은 뷰포트가 오히려 넓은 덱이 된다.) */
 .main-content-area {
   flex: 1;
   overflow-y: auto;
   position: relative;
-  background: #FFF;
+  background: var(--wm-bg);
+  container-type: inline-size;
 }
 
 /* Timeline Header */
 .timeline-header {
   position: sticky;
   top: 0;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--wm-scrim);
   backdrop-filter: blur(8px);
   padding: 12px 24px;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid var(--wm-border);
   z-index: 5;
   display: flex;
   justify-content: center;
@@ -917,15 +945,15 @@ onUnmounted(() => {
   align-items: center;
   gap: 16px;
   font-size: 11px;
-  color: #666;
-  background: #F5F5F5;
+  color: var(--wm-text-muted);
+  background: var(--wm-surface-2);
   padding: 4px 12px;
   border-radius: 20px;
 }
 
 .total-count {
   font-weight: 600;
-  color: #333;
+  color: var(--wm-text);
 }
 
 .platform-breakdown {
@@ -940,13 +968,15 @@ onUnmounted(() => {
   gap: 4px;
 }
 
-.breakdown-divider { color: #DDD; }
-.breakdown-item.twitter { color: #000; }
-.breakdown-item.reddit { color: #000; }
+.breakdown-divider { color: var(--wm-text-dim); }
+.breakdown-item.twitter { color: var(--wm-text); }
+.breakdown-item.reddit { color: var(--wm-text); }
 
-/* --- Timeline Feed --- */
+/* --- Timeline Feed ---
+   기본은 단일 스트림(좌측 축 1줄). 덱이 넓어지면(>=760px) 아래 컨테이너 쿼리에서
+   플랫폼 좌/우 이중 축으로 펼친다. */
 .timeline-feed {
-  padding: 24px 0;
+  padding: 24px var(--wm-gutter);
   position: relative;
   min-height: 100%;
   max-width: 900px;
@@ -955,32 +985,31 @@ onUnmounted(() => {
 
 .timeline-axis {
   position: absolute;
-  left: 50%;
+  left: calc(var(--wm-gutter) + 5px);
   top: 0;
   bottom: 0;
   width: 1px;
-  background: #EAEAEA; /* Cleaner line */
-  transform: translateX(-50%);
+  background: var(--wm-border);
 }
 
 .timeline-item {
   display: flex;
-  justify-content: center;
-  margin-bottom: 32px;
+  justify-content: flex-start;
+  margin-bottom: 20px;
   position: relative;
   width: 100%;
+  padding-left: 26px;
 }
 
 .timeline-marker {
   position: absolute;
-  left: 50%;
-  top: 24px;
+  left: 0;
+  top: 20px;
   width: 10px;
   height: 10px;
-  background: #FFF;
-  border: 1px solid #CCC;
+  background: var(--wm-surface);
+  border: 1px solid var(--wm-border);
   border-radius: 50%;
-  transform: translateX(-50%);
   z-index: 2;
   display: flex;
   align-items: center;
@@ -990,50 +1019,79 @@ onUnmounted(() => {
 .marker-dot {
   width: 4px;
   height: 4px;
-  background: #CCC;
+  background: var(--wm-border-strong);
   border-radius: 50%;
 }
 
-.timeline-item.twitter .marker-dot { background: #000; }
-.timeline-item.reddit .marker-dot { background: #000; }
-.timeline-item.twitter .timeline-marker { border-color: #000; }
-.timeline-item.reddit .timeline-marker { border-color: #000; }
+.timeline-item.twitter .marker-dot { background: var(--wm-accent); }
+.timeline-item.reddit .marker-dot { background: var(--wm-accent); }
+.timeline-item.twitter .timeline-marker { border-color: var(--wm-accent-border); }
+.timeline-item.reddit .timeline-marker { border-color: var(--wm-accent-border); }
 
 /* Card Layout */
 .timeline-card {
-  width: calc(100% - 48px);
-  background: #FFF;
-  border-radius: 2px;
-  padding: 16px 20px;
-  border: 1px solid #EAEAEA;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  width: 100%;
+  background: var(--wm-surface);
+  border-radius: var(--wm-radius-md);
+  padding: 14px 16px;
+  border: 1px solid var(--wm-border);
+  box-shadow: var(--wm-shadow-1);
   position: relative;
   transition: all 0.2s;
 }
 
 .timeline-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  border-color: #DDD;
+  box-shadow: var(--wm-shadow-2);
+  border-color: var(--wm-border-strong);
 }
 
-/* Left side (Twitter) */
-.timeline-item.twitter {
-  justify-content: flex-start;
-  padding-right: 50%;
-}
-.timeline-item.twitter .timeline-card {
-  margin-left: auto;
-  margin-right: 32px; /* Gap from axis */
-}
+/* 덱이 넓을 때만 플랫폼 이중 축(좌 Info Plaza / 우 Topic Community) */
+@container (min-width: 760px) {
+  .timeline-feed {
+    padding: 24px 0;
+  }
 
-/* Right side (Reddit) */
-.timeline-item.reddit {
-  justify-content: flex-end;
-  padding-left: 50%;
-}
-.timeline-item.reddit .timeline-card {
-  margin-right: auto;
-  margin-left: 32px; /* Gap from axis */
+  .timeline-axis {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .timeline-item {
+    justify-content: center;
+    margin-bottom: 32px;
+    padding-left: 0;
+  }
+
+  .timeline-marker {
+    left: 50%;
+    top: 24px;
+    transform: translateX(-50%);
+  }
+
+  .timeline-card {
+    width: calc(100% - 48px);
+    padding: 16px 20px;
+  }
+
+  /* Left side (Twitter) */
+  .timeline-item.twitter {
+    justify-content: flex-start;
+    padding-right: 50%;
+  }
+  .timeline-item.twitter .timeline-card {
+    margin-left: auto;
+    margin-right: 32px; /* Gap from axis */
+  }
+
+  /* Right side (Reddit) */
+  .timeline-item.reddit {
+    justify-content: flex-end;
+    padding-left: 50%;
+  }
+  .timeline-item.reddit .timeline-card {
+    margin-right: auto;
+    margin-left: 32px; /* Gap from axis */
+  }
 }
 
 /* Card Content Styles */
@@ -1043,7 +1101,7 @@ onUnmounted(() => {
   align-items: flex-start;
   margin-bottom: 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #F5F5F5;
+  border-bottom: 1px solid var(--wm-border-soft);
 }
 
 .agent-info {
@@ -1055,8 +1113,8 @@ onUnmounted(() => {
 .avatar-placeholder {
   width: 24px;
   height: 24px;
-  background: #000;
-  color: #FFF;
+  background: var(--wm-surface-3);
+  color: var(--wm-text);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1069,7 +1127,7 @@ onUnmounted(() => {
 .agent-name {
   font-size: 13px;
   font-weight: 600;
-  color: #000;
+  color: var(--wm-text);
 }
 
 .header-meta {
@@ -1079,7 +1137,7 @@ onUnmounted(() => {
 }
 
 .platform-indicator {
-  color: #999;
+  color: var(--wm-text-dim);
   display: flex;
   align-items: center;
 }
@@ -1095,33 +1153,33 @@ onUnmounted(() => {
 }
 
 /* Monochromatic Badges */
-.badge-post { background: #F0F0F0; color: #333; border-color: #E0E0E0; }
-.badge-comment { background: #F0F0F0; color: #666; border-color: #E0E0E0; }
-.badge-action { background: #FFF; color: #666; border: 1px solid #E0E0E0; }
-.badge-meta { background: #FAFAFA; color: #999; border: 1px dashed #DDD; }
+.badge-post { background: var(--wm-surface-2); color: var(--wm-text); border-color: var(--wm-border); }
+.badge-comment { background: var(--wm-surface-2); color: var(--wm-text-muted); border-color: var(--wm-border); }
+.badge-action { background: var(--wm-surface); color: var(--wm-text-muted); border: 1px solid var(--wm-border); }
+.badge-meta { background: var(--wm-surface); color: var(--wm-text-dim); border: 1px dashed var(--wm-border); }
 .badge-idle { opacity: 0.5; }
 
 .content-text {
   font-size: 13px;
   line-height: 1.6;
-  color: #333;
+  color: var(--wm-text);
   margin-bottom: 10px;
 }
 
 .content-text.main-text {
   font-size: 14px;
-  color: #000;
+  color: var(--wm-text);
 }
 
 /* Info Blocks (Quote, Repost, etc) */
 .quoted-block, .repost-content {
-  background: #F9F9F9;
-  border: 1px solid #EEE;
+  background: var(--wm-surface);
+  border: 1px solid var(--wm-border-soft);
   padding: 10px 12px;
   border-radius: 2px;
   margin-top: 8px;
   font-size: 12px;
-  color: #555;
+  color: var(--wm-text-muted);
 }
 
 .quote-header, .repost-info, .like-info, .search-info, .follow-info, .vote-info, .idle-info, .comment-context {
@@ -1130,19 +1188,19 @@ onUnmounted(() => {
   gap: 6px;
   margin-bottom: 6px;
   font-size: 11px;
-  color: #666;
+  color: var(--wm-text-muted);
 }
 
 .icon-small {
-  color: #999;
+  color: var(--wm-text-dim);
 }
 .icon-small.filled {
-  color: #999; /* Keep icons neutral unless highlighted */
+  color: var(--wm-text-dim); /* Keep icons neutral unless highlighted */
 }
 
 .search-query {
-  font-family: 'JetBrains Mono', monospace;
-  background: #F0F0F0;
+  font-family: var(--wm-mono);
+  background: var(--wm-surface-2);
   padding: 0 4px;
   border-radius: 2px;
 }
@@ -1152,8 +1210,8 @@ onUnmounted(() => {
   display: flex;
   justify-content: flex-end;
   font-size: 10px;
-  color: #BBB;
-  font-family: 'JetBrains Mono', monospace;
+  color: var(--wm-text-dim);
+  font-family: var(--wm-mono);
 }
 
 /* Waiting State */
@@ -1166,7 +1224,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  color: #CCC;
+  color: var(--wm-text-dim);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -1176,13 +1234,13 @@ onUnmounted(() => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid #EAEAEA;
+  border: 1px solid var(--wm-accent-border);
   animation: ripple 2s infinite;
 }
 
 @keyframes ripple {
-  0% { transform: scale(0.8); opacity: 1; border-color: #CCC; }
-  100% { transform: scale(2.5); opacity: 0; border-color: #EAEAEA; }
+  0% { transform: scale(0.8); opacity: 1; border-color: var(--wm-accent); }
+  100% { transform: scale(2.5); opacity: 0; border-color: var(--wm-accent); }
 }
 
 /* Animation */
@@ -1202,22 +1260,22 @@ onUnmounted(() => {
 
 /* Logs */
 .system-logs {
-  background: #000;
-  color: #DDD;
+  background: var(--wm-stage);
+  color: var(--wm-text-muted);
   padding: 16px;
-  font-family: 'JetBrains Mono', monospace;
-  border-top: 1px solid #222;
+  font-family: var(--wm-mono);
+  border-top: 1px solid var(--wm-border);
   flex-shrink: 0;
 }
 
 .log-header {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--wm-border);
   padding-bottom: 8px;
   margin-bottom: 8px;
   font-size: 10px;
-  color: #666;
+  color: var(--wm-text-dim);
 }
 
 .log-content {
@@ -1230,7 +1288,7 @@ onUnmounted(() => {
 }
 
 .log-content::-webkit-scrollbar { width: 4px; }
-.log-content::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+.log-content::-webkit-scrollbar-thumb { background: var(--wm-border-strong); border-radius: 2px; }
 
 .log-line {
   font-size: 11px;
@@ -1239,17 +1297,17 @@ onUnmounted(() => {
   line-height: 1.5;
 }
 
-.log-time { color: #555; min-width: 75px; }
-.log-msg { color: #BBB; word-break: break-all; }
-.mono { font-family: 'JetBrains Mono', monospace; }
+.log-time { color: var(--wm-text-dim); min-width: 75px; }
+.log-msg { color: var(--wm-text-muted); word-break: break-all; }
+.mono { font-family: var(--wm-mono); }
 
 /* Loading spinner for button */
 .loading-spinner-small {
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #FFF;
+  border: 2px solid transparent;
+  border-top-color: var(--wm-on-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-right: 6px;

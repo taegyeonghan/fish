@@ -1,56 +1,73 @@
-/* ===== World Model Shell Layout (Sidebar + Drawer) ===== */
-
-:root {
-  --uf-bg: #f4f8f5;
-  --uf-surface: #ffffff;
-  --uf-sidebar-bg: #0f2419;
-  --uf-sidebar-active: #1b3d2a;
-  --uf-sidebar-text: #8faa98;
-  --uf-sidebar-text-active: #ffffff;
-  --uf-text: #0f2419;
-  --uf-text-muted: #5a7265;
-  --uf-accent: #10b981;
-  --uf-accent-hover: #059669;
-  --uf-accent-soft: #ecfdf5;
-  --uf-border: #d7e5dc;
-  --uf-border-light: #eaf3ee;
-  --uf-green: #10b981;
-  --uf-red: #ef4444;
-  --uf-radius: 10px;
-  --uf-radius-sm: 6px;
-  --uf-font: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
-  --uf-mono: 'JetBrains Mono', monospace;
-  --uf-sidebar-w: 72px;
-  --uf-subheader-h: 48px;
-  --uf-drawer-w: 420px;
-}
+/* ===== World Model — 워크벤치 셸 기하 (rail · topbar · deck · stage) =====
+ *
+ * 색·형태 토큰은 여기서 선언하지 않는다. 정본은 assets/market-world.css(--wm-*).
+ * 이 파일은 "무엇이 어디에 얼마나" 만 정한다.
+ *
+ * 구조(뷰 6종 공통 DOM — 변경 없음):
+ *   .uf-shell
+ *     .uf-sidebar        진행 레일(rail)
+ *     .uf-main
+ *       .uf-subheader    상단 바(topbar)
+ *       .uf-content-wrap
+ *         .uf-content    단계 컨트롤 덱(deck)   ← DOM 1번째
+ *         .uf-drawer     세계 스테이지(stage)   ← DOM 2번째
+ *
+ * 배치 모드
+ *   side   (>1180px) 기본   : deck 가변 좌 · stage 고정(--wm-stage-w) 우  ← 레거시 유지
+ *   side   (>1180px) 변형   : .uf-shell--stage-lead / --balanced 를 붙이면
+ *                             deck 이 고정폭(--wm-deck-w) 이 되고 stage 가 남은 폭 전부
+ *   band   (<=1180px)      : stage 상단 띠(--wm-stage-band-h) · deck 하단 전폭
+ *                             (DOM 순서를 유지하면서 column-reverse 로 stage 를 위로)
+ *   overlay(.uf-shell.stage-overlay) : stage 가 deck 위에 시트로 떠오른다(리포트·탐색)
+ *   full   (.uf-shell.graph-fullscreen) : stage 단독
+ *
+ * 화면별 비중은 셸 변형 클래스로 지정한다:
+ *   .uf-shell--stage-lead | .uf-shell--balanced | .uf-shell--deck-lead
+ */
 
 /* ===== Shell ===== */
 .uf-shell {
   height: 100vh;
   display: flex;
-  background: var(--uf-bg);
+  background: var(--wm-bg);
   overflow: hidden;
-  font-family: var(--uf-font);
-  color: var(--uf-text);
+  font-family: var(--wm-font);
+  color: var(--wm-text);
 }
 
-/* ===== Left Sidebar (vertical navigation) ===== */
+/* 화면별 캔버스 비중 — 뷰가 셸에 변형 클래스를 붙여 opt-in 한다.
+   클래스가 없으면 레거시(덱 가변 · 스테이지 사이드패널)로 남는다. */
+.uf-shell--stage-lead {
+  --wm-deck-w: clamp(380px, 28%, 440px);
+  --wm-stage-band-h: clamp(260px, 34vh, 400px);
+}
+
+.uf-shell--balanced {
+  --wm-deck-w: clamp(420px, 32%, 500px);
+  --wm-stage-band-h: clamp(240px, 30vh, 360px);
+}
+
+.uf-shell--deck-lead {
+  --wm-deck-w: clamp(460px, 42%, 600px);
+  --wm-stage-band-h: clamp(180px, 24vh, 300px);
+}
+
+/* ===== 좌측 진행 레일 ===== */
 .uf-sidebar {
-  width: var(--uf-sidebar-w);
-  background: var(--uf-sidebar-bg);
+  width: var(--wm-rail-w);
+  background: var(--wm-chrome);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 16px 0;
   flex-shrink: 0;
-  color: var(--uf-sidebar-text);
+  color: var(--wm-text-dim);
 }
 
 .uf-sidebar-logo {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: var(--wm-radius-lg);
   cursor: pointer;
   margin-bottom: 20px;
   transition: transform 0.2s;
@@ -61,11 +78,11 @@
 .uf-sidebar-divider {
   width: 32px;
   height: 1px;
-  background: rgba(255,255,255,0.08);
+  background: var(--wm-border);
   margin: 8px 0 16px;
 }
 
-/* Step indicators (vertical dots) */
+/* 단계 슬롯 */
 .uf-steps-vertical {
   display: flex;
   flex-direction: column;
@@ -81,28 +98,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--wm-radius-lg);
   cursor: pointer;
   transition: all 0.2s;
-  font-family: var(--uf-mono);
+  font-family: var(--wm-mono);
   font-weight: 700;
   font-size: 13px;
-  color: var(--uf-sidebar-text);
+  color: var(--wm-text-dim);
 }
 
 .uf-step-item:hover:not(.uf-step-disabled) {
-  background: var(--uf-sidebar-active);
-  color: var(--uf-sidebar-text-active);
+  background: var(--wm-chrome-active);
+  color: var(--wm-text);
 }
 
 .uf-step-item.uf-step-active {
-  background: var(--uf-accent);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  background: var(--wm-accent);
+  color: var(--wm-on-accent);
+  box-shadow: var(--wm-glow);
 }
 
 .uf-step-item.uf-step-completed {
-  color: var(--uf-green);
+  color: var(--wm-pos);
 }
 
 .uf-step-item.uf-step-disabled {
@@ -110,19 +127,20 @@
   cursor: not-allowed;
 }
 
+/* 단계 이름 툴팁 — 문구는 i18n(main.stepNames) 의 data-label 그대로 */
 .uf-step-item::before {
   content: attr(data-label);
   position: absolute;
   left: calc(100% + 12px);
   top: 50%;
   transform: translateY(-50%);
-  background: var(--uf-sidebar-active);
-  color: #fff;
+  background: var(--wm-surface);
+  color: var(--wm-text);
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--wm-radius-sm);
   font-size: 12px;
   font-weight: 500;
-  font-family: var(--uf-font);
+  font-family: var(--wm-font);
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
@@ -145,10 +163,10 @@
 .uf-sidebar-btn {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: var(--wm-radius-md);
   background: transparent;
   border: none;
-  color: var(--uf-sidebar-text);
+  color: var(--wm-text-dim);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -157,11 +175,11 @@
 }
 
 .uf-sidebar-btn:hover {
-  background: var(--uf-sidebar-active);
-  color: var(--uf-sidebar-text-active);
+  background: var(--wm-chrome-active);
+  color: var(--wm-text);
 }
 
-/* ===== Main Area ===== */
+/* ===== 본문 영역 ===== */
 .uf-main {
   flex: 1;
   display: flex;
@@ -170,11 +188,12 @@
   position: relative;
 }
 
-/* Subheader (compact top bar) */
+/* 상단 바 */
 .uf-subheader {
-  height: var(--uf-subheader-h);
-  background: var(--uf-surface);
-  border-bottom: 1px solid var(--uf-border);
+  position: relative;
+  height: var(--wm-topbar-h);
+  background: var(--wm-chrome);
+  border-bottom: 1px solid var(--wm-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -187,29 +206,34 @@
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
 }
 
 .uf-crumb {
   font-size: 13px;
-  color: var(--uf-text-muted);
+  color: var(--wm-text-muted);
   font-weight: 500;
 }
 
 .uf-crumb-arrow {
-  color: var(--uf-border);
+  color: var(--wm-text-dim);
   font-size: 11px;
 }
 
 .uf-crumb-current {
   font-size: 14px;
-  color: var(--uf-text);
+  color: var(--wm-text);
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .uf-subheader-right {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .uf-status {
@@ -218,23 +242,23 @@
   gap: 6px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--uf-text-muted);
+  color: var(--wm-text-muted);
   padding: 4px 10px;
-  background: var(--uf-border-light);
-  border-radius: 100px;
+  background: var(--wm-surface-2);
+  border-radius: var(--wm-radius-pill);
 }
 
 .uf-status-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #d1d5db;
+  background: var(--wm-text-dim);
 }
 
-.uf-status.processing .uf-status-dot { background: var(--uf-accent); animation: uf-pulse 1.5s ease-in-out infinite; }
+.uf-status.processing .uf-status-dot { background: var(--wm-accent); animation: uf-pulse 1.5s ease-in-out infinite; }
 .uf-status.completed .uf-status-dot,
-.uf-status.ready .uf-status-dot { background: var(--uf-green); }
-.uf-status.error .uf-status-dot { background: var(--uf-red); }
+.uf-status.ready .uf-status-dot { background: var(--wm-pos); }
+.uf-status.error .uf-status-dot { background: var(--wm-neg); }
 
 @keyframes uf-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -246,74 +270,205 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: var(--uf-border-light);
-  border: 1px solid var(--uf-border);
-  border-radius: 8px;
+  background: var(--wm-surface-2);
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-md);
   font-size: 12px;
   font-weight: 600;
-  color: var(--uf-text);
+  color: var(--wm-text);
   cursor: pointer;
-  font-family: var(--uf-font);
+  font-family: var(--wm-font);
   transition: all 0.15s;
 }
 
 .uf-toggle-graph:hover {
-  background: var(--uf-accent-soft);
-  border-color: var(--uf-accent);
-  color: var(--uf-accent);
+  background: var(--wm-accent-soft);
+  border-color: var(--wm-accent-border);
+  color: var(--wm-accent-text);
 }
 
 .uf-toggle-graph.active {
-  background: var(--uf-accent);
-  border-color: var(--uf-accent);
-  color: #fff;
+  background: var(--wm-accent);
+  border-color: var(--wm-accent);
+  color: var(--wm-on-accent);
 }
 
-/* ===== Content + Drawer ===== */
+/* ===== deck + stage ===== */
 .uf-content-wrap {
   flex: 1;
   display: flex;
   min-height: 0;
+  min-width: 0;
   position: relative;
 }
 
+/* 단계 컨트롤 덱 (기본 = 레거시: 가변) */
 .uf-content {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  background: var(--uf-bg);
+  background: var(--wm-bg);
   display: flex;
   flex-direction: column;
 }
 
-/* Graph drawer on the right (slide-in) */
+/* 세계 스테이지 (기본 = 레거시: 우측 고정 패널) */
 .uf-drawer {
-  width: var(--uf-drawer-w);
-  background: var(--uf-surface);
-  border-left: 1px solid var(--uf-border);
+  flex: 0 0 var(--wm-stage-w);
+  min-width: 0;
+  min-height: 0;
+  background: var(--wm-stage);
+  border-left: 1px solid var(--wm-border);
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  transition: width 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.25s;
+  transition: flex-basis 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.25s;
   overflow: hidden;
 }
 
-.uf-drawer.collapsed {
+/* 스테이지 우위 — 덱이 고정폭이 되고 스테이지가 남은 공간을 전부 갖는다 */
+.uf-shell--stage-lead > .uf-main .uf-content,
+.uf-shell--balanced > .uf-main .uf-content {
+  flex: 0 0 var(--wm-deck-w);
+}
+
+.uf-shell--stage-lead > .uf-main .uf-drawer,
+.uf-shell--balanced > .uf-main .uf-drawer {
+  flex: 1 1 auto;
+}
+
+.uf-shell--deck-lead > .uf-main .uf-drawer {
+  flex: 0 0 clamp(320px, 34%, 520px);
+}
+
+/* 스테이지 접힘 → 덱이 전체를 차지.
+   변형 클래스 규칙(`.uf-shell--* > .uf-main .uf-drawer`, 특이도 0,3,0)을 반드시 이겨야 하므로
+   band 블록과 같은 규약으로 `.uf-shell > .uf-main` 한 단계를 올려 (0,4,0) 으로 쓴다.
+   (0,2,0) 로 두면 stage-lead/balanced/deck-lead 에서 접힘이 먹지 않아 죽은 띠가 남는다. */
+.uf-shell > .uf-main .uf-drawer.collapsed {
+  flex: 0 0 0;
   width: 0;
+  min-width: 0;
   opacity: 0;
   border-left: none;
 }
 
-.uf-drawer.expanded {
-  width: calc(100% - 0px);
+.uf-shell:has(.uf-drawer.collapsed) .uf-content {
+  flex: 1 1 auto;
 }
 
-/* Fullscreen mode for drawer */
+/* 데이터 없는 스테이지는 자리를 덜 차지한다(정직한 빈 상태) */
+.uf-drawer.is-empty {
+  flex: 0 1 clamp(240px, 24%, 340px);
+}
+
+/* 스테이지 단독 */
 .uf-shell.graph-fullscreen .uf-content {
   display: none;
 }
 
 .uf-shell.graph-fullscreen .uf-drawer {
+  flex: 1 1 100%;
+  border-left: none;
+}
+
+/* ===== overlay 모드 — 스테이지가 덱 위로 떠오른다 (리포트·세계 탐색) ===== */
+.uf-shell.stage-overlay .uf-content {
+  flex: 1 1 auto;
+}
+
+.uf-shell.stage-overlay .uf-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  width: min(760px, 74%);
+  flex: none;
+  border-left: 1px solid var(--wm-border);
+  box-shadow: var(--wm-shadow-3);
+  transform: translateX(0);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.2s;
+}
+
+/* overlay 접힘은 폭을 0 으로 줄이지 않고 밖으로 밀어낸다.
+   위 접힘 규칙과 특이도가 같으므로(0,4,0) 반드시 그 뒤에 와야 한다. */
+.uf-shell.stage-overlay .uf-drawer.collapsed {
+  width: min(760px, 74%);
+  flex: none;
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+  border-left: 1px solid var(--wm-border);
+}
+
+.uf-shell.stage-overlay.graph-fullscreen .uf-drawer {
   width: 100%;
+}
+
+/* ===== band 모드 — 임베드(약 1080) 기본 =====
+   선택자는 변형 클래스(.uf-shell--*, 특이도 0,3,0)를 반드시 이겨야 하므로
+   전부 `.uf-shell > .uf-main` 으로 한 단계 올려 쓴다. */
+@media (max-width: 1180px) {
+  /* DOM 은 [deck, stage] 순서. column-reverse 로 stage 를 위로 올린다. */
+  .uf-shell > .uf-main > .uf-content-wrap {
+    flex-direction: column-reverse;
+  }
+
+  .uf-shell > .uf-main .uf-content {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .uf-shell > .uf-main .uf-drawer {
+    flex: 0 0 var(--wm-stage-band-h);
+    width: 100%;
+    height: var(--wm-stage-band-h);
+    border-left: none;
+    border-bottom: 1px solid var(--wm-border);
+    transition: flex-basis 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.25s;
+  }
+
+  .uf-shell > .uf-main .uf-drawer.is-empty {
+    flex: 0 0 clamp(120px, 16vh, 180px);
+    height: clamp(120px, 16vh, 180px);
+  }
+
+  .uf-shell > .uf-main .uf-drawer.collapsed {
+    flex: 0 0 0;
+    height: 0;
+    width: 100%;
+    border-bottom: none;
+  }
+
+  /* overlay 모드는 좁은 폭에서 하단 전면 시트가 된다 */
+  .uf-shell.stage-overlay > .uf-main .uf-drawer {
+    position: absolute;
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    height: min(76%, 720px);
+    width: 100%;
+    flex: none;
+    border-left: none;
+    border-top: 1px solid var(--wm-border);
+    transform: translateY(0);
+  }
+
+  .uf-shell.stage-overlay > .uf-main .uf-drawer.collapsed {
+    height: min(76%, 720px);
+    flex: none;
+    transform: translateY(100%);
+  }
+
+  .uf-shell.graph-fullscreen > .uf-main .uf-drawer,
+  .uf-shell.stage-overlay.graph-fullscreen > .uf-main .uf-drawer {
+    position: relative;
+    flex: 1 1 100%;
+    height: auto;
+    transform: none;
+    border-bottom: none;
+    border-top: none;
+  }
 }

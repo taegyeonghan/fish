@@ -18,13 +18,12 @@
     </div>
 
     <!-- (설명 생략) -->
-    <div v-if="projects.length > 0" class="cards-container" :class="{ expanded: isExpanded }" :style="containerStyle">
-      <div 
-        v-for="(project, index) in projects" 
+    <div v-if="projects.length > 0" class="cards-container" :class="{ expanded: isExpanded }">
+      <div
+        v-for="(project, index) in projects"
         :key="project.simulation_id"
         class="project-card"
         :class="{ expanded: isExpanded, hovering: hoveringCard === index }"
-        :style="getCardStyle(index)"
         @mouseenter="hoveringCard = index"
         @mouseleave="hoveringCard = null"
         @click="navigateToProject(project)"
@@ -113,6 +112,12 @@
     <div v-if="loading" class="loading-state">
       <span class="loading-spinner"></span>
       <span class="loading-text">{{ $t('history.loadingText') }}</span>
+    </div>
+
+    <!-- 아카이브 0건 — 기존 키(common.noData)로 정직하게 비었음을 표시 -->
+    <div v-else-if="projects.length === 0" class="empty-state">
+      <span class="empty-icon">◇</span>
+      <span class="empty-text">{{ $t('common.noData') }}</span>
     </div>
 
     <!--  -->
@@ -212,7 +217,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, onActivated, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, onActivated, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { deleteSimulation, getSimulationHistory } from '../api/simulation'
@@ -233,82 +238,8 @@ const selectedProject = ref(null)
 let isAnimating = false
 let expandDebounceTimer = null
 
-//  - 
-const CARDS_PER_ROW = 4
-const CARD_WIDTH = 280  
-const CARD_HEIGHT = 280 
-const CARD_GAP = 24
-
-const containerStyle = computed(() => {
-  if (!isExpanded.value) {
-    // ：
-    return { minHeight: '420px' }
-  }
-  
-  // ：
-  const total = projects.value.length
-  if (total === 0) {
-    return { minHeight: '280px' }
-  }
-  
-  const rows = Math.ceil(total / CARDS_PER_ROW)
-  // ： *  + (-1) *  + 
-  const expandedHeight = rows * CARD_HEIGHT + (rows - 1) * CARD_GAP + 10
-  
-  return { minHeight: `${expandedHeight}px` }
-})
-
-const getCardStyle = (index) => {
-  const total = projects.value.length
-  
-  if (isExpanded.value) {
-    // ：
-    const transition = 'transform 700ms cubic-bezier(0.23, 1, 0.32, 1), opacity 700ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease, border-color 0.3s ease'
-
-    const col = index % CARDS_PER_ROW
-    const row = Math.floor(index / CARDS_PER_ROW)
-    
-    // ，
-    const currentRowStart = row * CARDS_PER_ROW
-    const currentRowCards = Math.min(CARDS_PER_ROW, total - currentRowStart)
-    
-    const rowWidth = currentRowCards * CARD_WIDTH + (currentRowCards - 1) * CARD_GAP
-    
-    const startX = -(rowWidth / 2) + (CARD_WIDTH / 2)
-    const colInRow = index % CARDS_PER_ROW
-    const x = startX + colInRow * (CARD_WIDTH + CARD_GAP)
-    
-    // ，
-    const y = 20 + row * (CARD_HEIGHT + CARD_GAP)
-
-    return {
-      transform: `translate(${x}px, ${y}px) rotate(0deg) scale(1)`,
-      zIndex: 100 + index,
-      opacity: 1,
-      transition: transition
-    }
-  } else {
-    // ：
-    const transition = 'transform 700ms cubic-bezier(0.23, 1, 0.32, 1), opacity 700ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease, border-color 0.3s ease'
-
-    const centerIndex = (total - 1) / 2
-    const offset = index - centerIndex
-    
-    const x = offset * 35
-    // ，
-    const y = 25 + Math.abs(offset) * 8
-    const r = offset * 3
-    const s = 0.95 - Math.abs(offset) * 0.05
-    
-    return {
-      transform: `translate(${x}px, ${y}px) rotate(${r}deg) scale(${s})`,
-      zIndex: 10 + index,
-      opacity: 1,
-      transition: transition
-    }
-  }
-}
-
+// 카드 배치는 CSS 그리드가 정한다(.cards-container). 화면에 들어왔는지(isExpanded)는
+// 인라인 transform 대신 .expanded 클래스의 등장 전이로만 쓴다.
 const getProgressClass = (simulation) => {
   const current = simulation.current_round || 0
   const total = simulation.total_rounds || 0
@@ -605,20 +536,21 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/*  */
+/* 색·형태는 --wm-* 정본 토큰만 쓴다(정의: assets/market-world.css).
+   Zone C 아카이브: 카드는 부채꼴(절대 위치 + JS transform)에서 전폭 그리드로 바꿨다.
+   1080 임베드에서 부채꼴은 컨테이너(약 1016px)를 넘어 좌우 카드가 잘려 나갔다(실측). */
 .history-database {
   position: relative;
   width: 100%;
-  min-height: 280px;
-  margin-top: 40px;
-  padding: 35px 0 40px;
+  margin-top: 24px;
+  padding: 28px 0 8px;
   overflow: visible;
 }
 
 /*  */
 .history-database.no-projects {
   min-height: auto;
-  padding: 40px 0 20px;
+  padding: 20px 0 4px;
 }
 
 /*  */
@@ -639,23 +571,24 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
-    linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-image:
+    linear-gradient(to right, var(--wm-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--wm-grid) 1px, transparent 1px);
   background-size: 50px 50px;
   /* ，， */
   background-position: top left;
 }
 
+/* 격자 띠의 네 변을 배경색으로 페이드 — 다크/라이트 모두 바닥색을 따라간다 */
 .gradient-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.9) 0%, transparent 15%, transparent 85%, rgba(255, 255, 255, 0.9) 100%),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 0%, transparent 20%, transparent 80%, rgba(255, 255, 255, 0.8) 100%);
+  background:
+    linear-gradient(to right, var(--wm-bg) 0%, transparent 15%, transparent 85%, var(--wm-bg) 100%),
+    linear-gradient(to bottom, var(--wm-bg) 0%, transparent 20%, transparent 80%, var(--wm-bg) 100%);
   pointer-events: none;
 }
 
@@ -667,53 +600,59 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 24px;
-  margin-bottom: 24px;
-  font-family: 'JetBrains Mono', 'SF Mono', monospace;
-  padding: 0 40px;
+  margin-bottom: 20px;
+  font-family: var(--wm-mono);
 }
 
 .section-line {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #E5E7EB, transparent);
+  background: linear-gradient(90deg, transparent, var(--wm-border), transparent);
   max-width: 300px;
 }
 
 .section-title {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #9CA3AF;
-  letter-spacing: 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--wm-text-dim);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-/*  */
+/* 아카이브 카드 — 전폭 그리드 */
 .cards-container {
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 0 40px;
-  transition: min-height 700ms cubic-bezier(0.23, 1, 0.32, 1);
-  /* min-height  JS ， */
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--wm-gutter);
 }
 
 /*  */
 .project-card {
-  position: absolute;
-  width: 280px;
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
-  border-radius: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--wm-surface);
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-md);
   padding: 14px;
   cursor: pointer;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 700ms cubic-bezier(0.23, 1, 0.32, 1), opacity 700ms cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: var(--wm-shadow-1);
+  /* 아카이브가 화면에 들어오면(.expanded) 카드가 제자리로 올라온다.
+     관찰자가 끝내 발화하지 않아도 카드는 그대로 읽힌다(가시성을 상태에 걸지 않는다). */
+  transform: translateY(6px);
+  transition: transform 600ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.cards-container.expanded .project-card {
+  transform: none;
 }
 
 .project-card:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 0, 0, 0.4);
+  box-shadow: var(--wm-shadow-2);
+  border-color: var(--wm-border-strong);
   z-index: 1000 !important;
 }
 
@@ -728,13 +667,13 @@ onUnmounted(() => {
   align-items: center;
   margin-bottom: 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #F3F4F6;
-  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  border-bottom: 1px solid var(--wm-border-soft);
+  font-family: var(--wm-mono);
   font-size: 0.7rem;
 }
 
 .card-id {
-  color: #6B7280;
+  color: var(--wm-text-muted);
   letter-spacing: 0.5px;
   font-weight: 500;
 }
@@ -753,11 +692,12 @@ onUnmounted(() => {
 }
 
 .card-delete-btn {
-  border: 1px solid #fca5a5;
-  background: #fff5f5;
-  color: #b91c1c;
-  border-radius: 4px;
+  border: 1px solid var(--wm-border);
+  background: var(--wm-neg-soft);
+  color: var(--wm-neg);
+  border-radius: var(--wm-radius-sm);
   padding: 4px 8px;
+  font-family: var(--wm-mono);
   font-size: 0.7rem;
   font-weight: 700;
   cursor: pointer;
@@ -765,8 +705,7 @@ onUnmounted(() => {
 }
 
 .card-delete-btn:hover:not(:disabled) {
-  background: #fee2e2;
-  border-color: #ef4444;
+  border-color: var(--wm-neg);
 }
 
 .card-delete-btn:disabled {
@@ -784,13 +723,13 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-/*  */
-.status-icon:nth-child(1).available { color: #3B82F6; } /*  -  */
-.status-icon:nth-child(2).available { color: #F59E0B; } /*  -  */
-.status-icon:nth-child(3).available { color: #10B981; } /*  -  */
+/* 그래프 생성 / 환경 설정 / 분석 리포트 — 진행 단계 구분 */
+.status-icon:nth-child(1).available { color: var(--wm-info); }
+.status-icon:nth-child(2).available { color: var(--wm-warn); }
+.status-icon:nth-child(3).available { color: var(--wm-pos); }
 
 .status-icon.unavailable {
-  color: #D1D5DB;
+  color: var(--wm-text-dim);
   opacity: 0.5;
 }
 
@@ -809,22 +748,23 @@ onUnmounted(() => {
 }
 
 /*  */
-.card-progress.completed { color: #10B981; }    /*  -  */
-.card-progress.in-progress { color: #F59E0B; }  /*  -  */
-.card-progress.not-started { color: #9CA3AF; }  /*  -  */
-.card-status.pending { color: #9CA3AF; }
+.card-progress.completed { color: var(--wm-pos); }
+.card-progress.in-progress { color: var(--wm-warn); }
+.card-progress.not-started { color: var(--wm-text-dim); }
+.card-status.pending { color: var(--wm-text-dim); }
 
 /*  */
 .card-files-wrapper {
   position: relative;
   width: 100%;
   min-height: 48px;
-  max-height: 110px;
+  /* 파일 3건 + "+N개 파일" 줄까지 잘리지 않는 높이(110px 에서는 마지막 줄이 잘렸다) */
+  max-height: 132px;
   margin-bottom: 12px;
   padding: 8px 10px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
-  border-radius: 4px;
-  border: 1px solid #e8eaed;
+  background: var(--wm-surface-2);
+  border-radius: var(--wm-radius-sm);
+  border: 1px solid var(--wm-border);
   overflow: hidden;
 }
 
@@ -840,11 +780,11 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 3px 6px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--wm-mono);
   font-size: 0.6rem;
-  color: #6B7280;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 3px;
+  color: var(--wm-text-muted);
+  background: var(--wm-surface);
+  border-radius: var(--wm-radius-sm);
   letter-spacing: 0.3px;
 }
 
@@ -853,26 +793,30 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 4px 6px;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 3px;
+  background: var(--wm-surface);
+  border: 1px solid transparent;
+  border-radius: var(--wm-radius-sm);
   transition: all 0.2s ease;
 }
 
 .file-item:hover {
-  background: rgba(255, 255, 255, 1);
+  background: var(--wm-surface-3);
   transform: translateX(2px);
-  border-color: #e5e7eb;
+  border-color: var(--wm-border);
 }
 
-/*  */
+/* 파일 종류 라벨 — 정본은 중성 배지(색 구분 없음, market-world.css .file-tag) */
 .file-tag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 16px;
   padding: 0 4px;
-  border-radius: 2px;
-  font-family: 'JetBrains Mono', monospace;
+  color: var(--wm-text-muted);
+  background: var(--wm-surface-2);
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-sm);
+  font-family: var(--wm-mono);
   font-size: 0.55rem;
   font-weight: 600;
   line-height: 1;
@@ -882,21 +826,10 @@ onUnmounted(() => {
   min-width: 28px;
 }
 
-/*  - Morandi */
-.file-tag.pdf { background: #f2e6e6; color: #a65a5a; }
-.file-tag.doc { background: #e6eff5; color: #5a7ea6; }
-.file-tag.xls { background: #e6f2e8; color: #5aa668; }
-.file-tag.ppt { background: #f5efe6; color: #a6815a; }
-.file-tag.txt { background: #f0f0f0; color: #757575; }
-.file-tag.code { background: #eae6f2; color: #815aa6; }
-.file-tag.img { background: #e6f2f2; color: #5aa6a6; }
-.file-tag.zip { background: #f2f0e6; color: #a69b5a; }
-.file-tag.other { background: #f3f4f6; color: #6b7280; }
-
 .file-name {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--wm-font);
   font-size: 0.7rem;
-  color: #4b5563;
+  color: var(--wm-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -910,7 +843,7 @@ onUnmounted(() => {
   justify-content: center;
   gap: 8px;
   height: 48px;
-  color: #9CA3AF;
+  color: var(--wm-text-dim);
 }
 
 .empty-file-icon {
@@ -919,15 +852,14 @@ onUnmounted(() => {
 }
 
 .empty-file-text {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--wm-mono);
   font-size: 0.7rem;
   letter-spacing: 0.5px;
 }
 
 /*  */
 .project-card:hover .card-files-wrapper {
-  border-color: #d1d5db;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-color: var(--wm-border-strong);
 }
 
 /*  */
@@ -937,18 +869,18 @@ onUnmounted(() => {
   left: 6px;
   width: 8px;
   height: 8px;
-  border-top: 1.5px solid rgba(0, 0, 0, 0.4);
-  border-left: 1.5px solid rgba(0, 0, 0, 0.4);
+  border-top: 1.5px solid var(--wm-border-strong);
+  border-left: 1.5px solid var(--wm-border-strong);
   pointer-events: none;
   z-index: 10;
 }
 
 /*  */
 .card-title {
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--wm-font);
   font-size: 0.9rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--wm-text);
   margin: 0 0 6px 0;
   line-height: 1.4;
   white-space: nowrap;
@@ -957,15 +889,16 @@ onUnmounted(() => {
   transition: color 0.3s ease;
 }
 
+/* 전역 시트가 .card-title 색을 !important 로 고정하므로 hover 는 같은 무게로 덮는다 */
 .project-card:hover .card-title {
-  color: #2563EB;
+  color: var(--wm-accent-text) !important;
 }
 
 /*  */
 .card-desc {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--wm-font);
   font-size: 0.75rem;
-  color: #6B7280;
+  color: var(--wm-text-muted);
   margin: 0 0 16px 0;
   line-height: 1.5;
   height: 34px;
@@ -975,17 +908,18 @@ onUnmounted(() => {
   -webkit-box-orient: vertical;
 }
 
-/*  */
+/* 같은 행의 카드 높이를 맞추고(그리드 stretch) 푸터는 카드 밑단에 붙인다 */
 .card-footer {
   position: relative;
+  margin-top: auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding-top: 12px;
-  border-top: 1px solid #F3F4F6;
-  font-family: 'JetBrains Mono', monospace;
+  border-top: 1px solid var(--wm-border-soft);
+  font-family: var(--wm-mono);
   font-size: 0.65rem;
-  color: #9CA3AF;
+  color: var(--wm-text-dim);
   font-weight: 500;
 }
 
@@ -1011,9 +945,9 @@ onUnmounted(() => {
 }
 
 /*  -  */
-.card-footer .card-progress.completed { color: #10B981; }
-.card-footer .card-progress.in-progress { color: #F59E0B; }
-.card-footer .card-progress.not-started { color: #9CA3AF; }
+.card-footer .card-progress.completed { color: var(--wm-pos); }
+.card-footer .card-progress.in-progress { color: var(--wm-warn); }
+.card-footer .card-progress.not-started { color: var(--wm-text-dim); }
 
 /*  */
 .card-bottom-line {
@@ -1022,7 +956,7 @@ onUnmounted(() => {
   left: 0;
   height: 2px;
   width: 0;
-  background-color: #000;
+  background-color: var(--wm-accent);
   transition: width 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   z-index: 20;
 }
@@ -1031,14 +965,22 @@ onUnmounted(() => {
   width: 100%;
 }
 
-/*  */
+/* 0건·로딩 상태 */
 .empty-state, .loading-state {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 48px;
-  color: #9CA3AF;
+  gap: 12px;
+  padding: 36px;
+  color: var(--wm-text-dim);
+}
+
+.empty-state {
+  border: 1px dashed var(--wm-border);
+  border-radius: var(--wm-radius-md);
+  background: var(--wm-surface);
 }
 
 .empty-icon {
@@ -1046,33 +988,23 @@ onUnmounted(() => {
   opacity: 0.5;
 }
 
+.empty-text {
+  font-family: var(--wm-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
 .loading-spinner {
   width: 24px;
   height: 24px;
-  border: 2px solid #E5E7EB;
-  border-top-color: #6B7280;
+  border: 2px solid var(--wm-border);
+  border-top-color: var(--wm-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-/*  */
-@media (max-width: 1200px) {
-  .project-card {
-    width: 240px;
-  }
-}
-
-@media (max-width: 768px) {
-  .cards-container {
-    padding: 0 20px;
-  }
-  .project-card {
-    width: 200px;
-  }
 }
 
 /* =====  ===== */
@@ -1082,7 +1014,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--wm-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1091,14 +1023,14 @@ onUnmounted(() => {
 }
 
 .modal-content {
-  background: #FFFFFF;
+  background: var(--wm-surface);
   width: 560px;
   max-width: 90vw;
   max-height: 85vh;
   overflow-y: auto;
-  border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-lg);
+  box-shadow: var(--wm-shadow-3);
 }
 
 /*  */
@@ -1136,21 +1068,22 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 20px 32px;
-  border-bottom: 1px solid #F3F4F6;
-  background: #FFFFFF;
+  border-bottom: 1px solid var(--wm-border);
+  background: var(--wm-surface);
 }
 
 .modal-title-section {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .modal-id {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--wm-mono);
   font-size: 1rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--wm-text);
   letter-spacing: 0.5px;
 }
 
@@ -1158,22 +1091,22 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--wm-mono);
   font-size: 0.75rem;
   font-weight: 600;
   padding: 4px 8px;
-  border-radius: 4px;
-  background: #F9FAFB;
+  border-radius: var(--wm-radius-sm);
+  background: var(--wm-surface-2);
 }
 
-.modal-progress.completed { color: #10B981; background: rgba(16, 185, 129, 0.1); }
-.modal-progress.in-progress { color: #F59E0B; background: rgba(245, 158, 11, 0.1); }
-.modal-progress.not-started { color: #9CA3AF; background: #F3F4F6; }
+.modal-progress.completed { color: var(--wm-pos); background: var(--wm-pos-soft); }
+.modal-progress.in-progress { color: var(--wm-warn); background: var(--wm-warn-soft); }
+.modal-progress.not-started { color: var(--wm-text-dim); background: var(--wm-surface-2); }
 
 .modal-create-time {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--wm-mono);
   font-size: 0.75rem;
-  color: #9CA3AF;
+  color: var(--wm-text-dim);
   letter-spacing: 0.3px;
 }
 
@@ -1183,18 +1116,18 @@ onUnmounted(() => {
   border: none;
   background: transparent;
   font-size: 1.5rem;
-  color: #9CA3AF;
+  color: var(--wm-text-dim);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  border-radius: 6px;
+  border-radius: var(--wm-radius-sm);
 }
 
 .modal-close:hover {
-  background: #F3F4F6;
-  color: #111827;
+  background: var(--wm-surface-2);
+  color: var(--wm-text);
 }
 
 /*  */
@@ -1211,23 +1144,23 @@ onUnmounted(() => {
 }
 
 .modal-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.75rem;
-  color: #6B7280;
+  font-family: var(--wm-mono);
+  font-size: 0.7rem;
+  color: var(--wm-text-muted);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.1em;
   margin-bottom: 10px;
   font-weight: 500;
 }
 
 .modal-requirement {
   font-size: 0.95rem;
-  color: #374151;
+  color: var(--wm-text);
   line-height: 1.6;
   padding: 16px;
-  background: #F9FAFB;
-  border: 1px solid #F3F4F6;
-  border-radius: 8px;
+  background: var(--wm-surface-2);
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-sm);
 }
 
 .modal-files {
@@ -1245,17 +1178,17 @@ onUnmounted(() => {
 }
 
 .modal-files::-webkit-scrollbar-track {
-  background: #F3F4F6;
+  background: var(--wm-surface-2);
   border-radius: 2px;
 }
 
 .modal-files::-webkit-scrollbar-thumb {
-  background: #D1D5DB;
+  background: var(--wm-border-strong);
   border-radius: 2px;
 }
 
 .modal-files::-webkit-scrollbar-thumb:hover {
-  background: #9CA3AF;
+  background: var(--wm-text-dim);
 }
 
 .modal-file-item {
@@ -1263,20 +1196,20 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
-  border-radius: 6px;
+  background: var(--wm-surface);
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-sm);
   transition: all 0.2s ease;
 }
 
 .modal-file-item:hover {
-  border-color: #D1D5DB;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border-color: var(--wm-border-strong);
+  box-shadow: var(--wm-shadow-1);
 }
 
 .modal-file-name {
   font-size: 0.85rem;
-  color: #4B5563;
+  color: var(--wm-text-muted);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1285,11 +1218,11 @@ onUnmounted(() => {
 
 .modal-empty {
   font-size: 0.85rem;
-  color: #9CA3AF;
+  color: var(--wm-text-dim);
   padding: 16px;
-  background: #F9FAFB;
-  border: 1px dashed #E5E7EB;
-  border-radius: 6px;
+  background: var(--wm-surface-2);
+  border: 1px dashed var(--wm-border);
+  border-radius: var(--wm-radius-sm);
   text-align: center;
 }
 
@@ -1299,20 +1232,20 @@ onUnmounted(() => {
   align-items: center;
   gap: 16px;
   padding: 10px 32px 0;
-  background: #FFFFFF;
+  background: var(--wm-surface);
 }
 
 .divider-line {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #E5E7EB, transparent);
+  background: linear-gradient(90deg, transparent, var(--wm-border), transparent);
 }
 
 .divider-text {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--wm-mono);
   font-size: 0.7rem;
-  color: #9CA3AF;
-  letter-spacing: 2px;
+  color: var(--wm-text-dim);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -1320,9 +1253,9 @@ onUnmounted(() => {
 /*  */
 .modal-actions {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   padding: 20px 32px;
-  background: #FFFFFF;
+  background: var(--wm-surface);
 }
 
 .modal-btn {
@@ -1332,9 +1265,9 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 16px;
-  border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  background: #FFFFFF;
+  border: 1px solid var(--wm-border);
+  border-radius: var(--wm-radius-sm);
+  background: var(--wm-surface-2);
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -1342,22 +1275,22 @@ onUnmounted(() => {
 }
 
 .modal-btn:hover:not(:disabled) {
-  border-color: #000000;
+  border-color: var(--wm-accent-border);
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--wm-shadow-2);
 }
 
 .modal-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: #F9FAFB;
+  background: var(--wm-surface-2);
 }
 
 .btn-step {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--wm-mono);
   font-size: 0.6rem;
   font-weight: 500;
-  color: #9CA3AF;
+  color: var(--wm-text-dim);
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -1369,25 +1302,25 @@ onUnmounted(() => {
 }
 
 .btn-text {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--wm-mono);
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.5px;
-  color: #4B5563;
+  color: var(--wm-text-muted);
 }
 
-.modal-btn.btn-project .btn-icon { color: #3B82F6; }
-.modal-btn.btn-simulation .btn-icon { color: #F59E0B; }
-.modal-btn.btn-report .btn-icon { color: #10B981; }
+.modal-btn.btn-project .btn-icon { color: var(--wm-info); }
+.modal-btn.btn-simulation .btn-icon { color: var(--wm-warn); }
+.modal-btn.btn-report .btn-icon { color: var(--wm-pos); }
 .modal-btn.btn-delete .btn-icon,
-.modal-btn.btn-delete .btn-text { color: #B91C1C; }
+.modal-btn.btn-delete .btn-text { color: var(--wm-neg); }
 .modal-btn.btn-delete:hover:not(:disabled) {
-  border-color: #EF4444;
-  background: #FFF5F5;
+  border-color: var(--wm-neg);
+  background: var(--wm-neg-soft);
 }
 
 .modal-btn:hover:not(:disabled) .btn-text {
-  color: #111827;
+  color: var(--wm-text);
 }
 
 /*  */
@@ -1396,13 +1329,13 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0 32px 20px;
-  background: #FFFFFF;
+  background: var(--wm-surface);
 }
 
 .hint-text {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--wm-mono);
   font-size: 0.7rem;
-  color: #9CA3AF;
+  color: var(--wm-text-dim);
   letter-spacing: 0.3px;
   text-align: center;
   line-height: 1.5;

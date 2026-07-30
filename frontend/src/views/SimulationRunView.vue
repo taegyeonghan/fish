@@ -1,5 +1,10 @@
 <template>
-  <div class="uf-shell" :class="{ 'graph-fullscreen': drawerMode === 'full' }">
+  <!-- R4 상호작용 실행: 세계가 움직이는 유일한 화면 → 스테이지·덱 균형(balanced) -->
+  <div
+    class="uf-shell uf-shell--balanced"
+    :class="{ 'graph-fullscreen': drawerMode === 'full', 'is-running': isSimulating }"
+    :style="{ '--wm-progress': String(runProgress) }"
+  >
     <!-- Left Sidebar -->
     <aside class="uf-sidebar">
       <img src="../assets/logo/ungdroo_logo.png" alt="logo" class="uf-sidebar-logo" @click="router.push('/')" />
@@ -66,10 +71,14 @@
             @next-step="handleNextStep"
             @add-log="addLog"
             @update-status="updateStatus"
+            @update-progress="updateProgress"
           />
         </div>
 
-        <aside class="uf-drawer" :class="{ collapsed: drawerMode === 'hidden', expanded: drawerMode === 'full' }">
+        <aside
+          class="uf-drawer"
+          :class="{ collapsed: drawerMode === 'hidden', expanded: drawerMode === 'full', 'is-empty': !hasGraph }"
+        >
           <GraphPanel
             :graphData="graphData"
             :loading="graphLoading"
@@ -131,6 +140,16 @@ const statusText = computed(() => {
 })
 
 const isSimulating = computed(() => currentStatus.value === 'processing')
+
+// 그래프가 비었으면 스테이지 띠를 줄인다(죽은 공간 방지)
+const hasGraph = computed(() => !!graphData.value?.nodes?.length)
+
+// 상단 바 진행선 — Step3 이 라운드 진행도를 올려준다(0~1)
+const runProgress = ref(0)
+const updateProgress = (ratio) => {
+  const n = Number(ratio)
+  runProgress.value = Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0
+}
 
 // --- Helpers ---
 const addLog = (msg) => {
@@ -310,4 +329,29 @@ onUnmounted(() => {
 
 <style>
 @import '../assets/layout.css';
+
+/* balanced 모드는 스테이지에 남는 폭을 전부 주지만, 그래프가 아직 없으면
+   빈 캔버스가 화면 절반을 먹는다. side 폭(>1180)에서만 스테이지를 줄이고 덱을 늘린다.
+   (band 모드의 .is-empty 높이 규칙은 건드리지 않는다.) */
+@media (min-width: 1181px) {
+  /* 접혔을 때는 폭 0 이 우선이므로 :not(.collapsed) 로 빠진다
+     (layout.css 의 접힘 규칙과 특이도가 같아 순서에 의존하지 않게 한다). */
+  .uf-shell--balanced > .uf-main .uf-drawer.is-empty:not(.collapsed) {
+    flex: 0 0 clamp(280px, 26%, 380px);
+  }
+
+  .uf-shell--balanced > .uf-main .uf-content:has(+ .uf-drawer.is-empty) {
+    flex: 1 1 auto;
+  }
+}
+
+/* 실행 중에는 스테이지 격자가 아주 느리게 흐른다(세계가 돌아가고 있다는 신호).
+   .uf-shell.is-running 은 이 화면만 붙인다. prefers-reduced-motion 은 전역 시트가 처리. */
+.uf-shell.is-running .graph-container {
+  animation: wm-stage-drift 24s linear infinite;
+}
+
+@keyframes wm-stage-drift {
+  to { background-position: 0 0, 28px 28px, 28px 28px, 0 0; }
+}
 </style>

@@ -283,111 +283,152 @@ const startSimulation = () => {
 </script>
 
 <style scoped>
+/* 색·형태는 --wm-* 정본 토큰만 쓴다(정의: assets/market-world.css).
+   --c-* 는 Home 레거시 별칭이라 이름은 유지하고 값만 --wm-* 를 가리킨다(SPEC §4.9).
+   구조(Zone A 콜드오픈 / Zone B 컴포즈 / Zone C 아카이브)는 이 파일이 정하고,
+   질감(대형 타이포·글로우·모노 라벨)은 market-world.css 의 .home 레이어가 얹는다. */
 .home {
-  --c-bg: #fbfaf7;
-  --c-surface: #ffffff;
-  --c-text: #0c1e3e;
-  --c-text-muted: #64748b;
-  --c-text-dim: #94a3b8;
-  --c-accent: #d97706;
-  --c-accent-hover: #b45309;
-  --c-accent-soft: #fef3c7;
-  --c-navy: #0c1e3e;
-  --c-border: #e7e5e0;
-  --c-border-soft: #f5f3ee;
+  --c-bg: var(--wm-bg);
+  --c-surface: var(--wm-surface);
+  --c-text: var(--wm-text);
+  --c-text-muted: var(--wm-text-muted);
+  --c-text-dim: var(--wm-text-dim);
+  --c-accent: var(--wm-accent);
+  --c-accent-hover: var(--wm-accent-hover);
+  --c-accent-soft: var(--wm-accent-soft);
+  --c-navy: var(--wm-text);
+  --c-border: var(--wm-border);
+  --c-border-soft: var(--wm-surface-2);
   min-height: 100vh;
   background: var(--c-bg);
-  font-family: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
+  font-family: var(--wm-font);
   color: var(--c-text);
 }
 
 .nav {
-  height: 68px;
+  height: 72px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 40px;
-  background: var(--c-surface);
+  padding: 0 clamp(22px, 4vw, 56px);
+  background: var(--wm-chrome);
   border-bottom: 1px solid var(--c-border);
   position: sticky;
   top: 0;
   z-index: 100;
 }
-.nav-brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-.nav-logo { width: 42px; height: 42px; border-radius: 10px; }
+.nav-brand { display: flex; align-items: center; gap: 14px; cursor: pointer; }
+.nav-logo { width: 36px; height: 36px; border-radius: 50%; }
 .nav-name { display: flex; flex-direction: column; line-height: 1.2; }
-.nav-title { font-weight: 800; font-size: 17px; letter-spacing: -0.4px; color: var(--c-navy); }
+.nav-title { font-weight: 800; font-size: 15px; letter-spacing: -0.4px; color: var(--c-navy); }
 .nav-sub { font-size: 11px; color: var(--c-text-muted); font-weight: 500; letter-spacing: 0.3px; }
-.nav-actions { display: flex; align-items: center; gap: 12px; }
+.nav-actions { display: flex; align-items: center; gap: 18px; }
 
+/* 세계 발사대 그리드 — 좌: 시나리오 / 우: 시간축·실행. Zone A/C 는 전폭. */
 .main {
-  max-width: 1080px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 56px 32px 80px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(340px, 0.72fr);
+  gap: 0 var(--wm-gutter);
+  padding: clamp(48px, 6vw, 88px) clamp(22px, 4vw, 40px) 88px;
 }
 
-.hero { text-align: center; margin-bottom: 40px; }
+/* --- Zone A: 콜드오픈 --- */
+.hero {
+  grid-column: 1 / -1;
+  position: relative;
+  min-height: 348px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+  margin: 0 0 64px;
+  padding-right: min(42vw, 500px);
+}
 .hero-badge {
   display: inline-flex; align-items: center; gap: 8px;
+  color: var(--c-accent-text);
+  font-size: 12px; font-weight: 700; letter-spacing: 0.3px;
+  margin-bottom: 26px;
+  border: 1px solid var(--wm-accent-border);
+  border-radius: var(--wm-radius-pill);
   padding: 7px 16px;
   background: var(--c-accent-soft);
-  color: var(--c-accent);
-  border-radius: 100px;
-  font-size: 12px; font-weight: 700; letter-spacing: 0.3px;
-  margin-bottom: 24px;
-  border: 1px solid rgba(217, 119, 6, 0.15);
 }
-.pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c-accent); animation: pulse 2s ease-in-out infinite; }
+.pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c-accent); animation: pulse 2s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
 
 .hero-title {
+  max-width: 720px;
   font-size: 42px; font-weight: 800; line-height: 1.25;
   letter-spacing: -1.2px; color: var(--c-navy); margin: 0 0 20px;
 }
-.hero-title .accent { color: var(--c-accent); }
+.hero-title .accent { color: var(--c-accent-text); }
 .hero-desc {
   font-size: 16px; line-height: 1.7; color: var(--c-text-muted);
-  max-width: 640px; margin: 0 auto;
+  max-width: 640px; margin: 0;
 }
 
-.flow-indicator {
-  display: flex; align-items: center; justify-content: center; gap: 16px;
-  margin-bottom: 32px; padding: 16px;
+/* 세계(orbit) = hero 우측 스테이지 창.
+   전역 시트의 hero::before(대형 타이포 판)와 orbit 은 같은 박스를 쓰기 때문에
+   1080 에서는 글자가 FED·MARKET 칩을 덮고(SPEC §6-3), 1600 에서는 링 뒤로 글자
+   조각만 남아 아티팩트로 읽혔다(실측). 판을 접고 프레임을 orbit 이 직접 갖는다. */
+.hero::before { display: none !important; }
+
+.entity-orbit {
+  border: 1px solid var(--c-border);
+  background:
+    linear-gradient(135deg, transparent 52%, var(--c-accent-soft)),
+    var(--wm-stage);
+  clip-path: polygon(0 0, 94% 0, 100% 9%, 100% 100%, 6% 100%, 0 91%);
 }
-.flow-step { display: flex; align-items: center; gap: 10px; opacity: 0.55; transition: opacity 0.3s; }
+
+/* --- Zone B: 컴포즈 --- */
+.flow-indicator {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; justify-content: flex-start; gap: 0;
+  margin: 0; padding: 0 0 18px;
+  border-bottom: 1px solid var(--c-border);
+}
+.flow-step { display: flex; align-items: center; gap: 8px; transition: opacity 0.3s; }
 .flow-step.done { opacity: 1; }
 .flow-num {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--c-surface); border: 2px solid var(--c-border);
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--c-surface); border: 1px solid var(--wm-accent-border);
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700; color: var(--c-text-muted);
+  font-size: 12px; font-weight: 700; color: var(--c-accent-text);
   transition: all 0.3s;
 }
 .flow-step.done .flow-num {
-  background: var(--c-navy); border-color: var(--c-navy); color: #fff;
+  background: var(--c-accent); border-color: var(--c-accent); color: var(--wm-on-accent);
 }
-.flow-label { font-size: 13px; font-weight: 600; color: var(--c-text); }
+.flow-label { font-size: 13px; font-weight: 600; color: var(--c-text-muted); }
 .flow-arrow { color: var(--c-text-dim); font-size: 14px; }
 
 .form-grid {
-  margin-bottom: 24px;
+  grid-column: 1;
+  min-width: 0;
+  margin: var(--wm-gutter) 0 0;
 }
 
 .card {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
-  border-radius: 14px;
-  padding: 24px;
+  border-radius: var(--wm-radius-md);
+  padding: 26px;
   display: flex;
   flex-direction: column;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.card:hover { border-color: #d6d3cc; box-shadow: 0 4px 16px rgba(12, 30, 62, 0.04); }
+.card:hover { border-color: var(--wm-border-strong); box-shadow: var(--wm-shadow-2); }
 
-.card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 .card-icon {
-  width: 38px; height: 38px; border-radius: 10px;
-  background: var(--c-accent-soft); color: var(--c-accent);
+  width: 38px; height: 38px; border-radius: var(--wm-radius-sm);
+  background: var(--c-accent-soft); color: var(--c-accent-text);
+  border: 1px solid var(--wm-accent-border);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .card-title-group { display: flex; flex-direction: column; gap: 2px; }
@@ -395,52 +436,54 @@ const startSimulation = () => {
 .card-hint { font-size: 12px; color: var(--c-text-muted); font-weight: 500; }
 
 .prompt-input {
-  flex: 1; width: 100%; min-height: 220px;
-  padding: 14px 16px;
+  flex: 1; width: 100%; min-height: 238px;
+  padding: 18px;
   background: var(--c-border-soft);
   border: 1px solid var(--c-border);
-  border-radius: 8px;
+  border-radius: var(--wm-radius-sm);
   font-family: inherit; font-size: 14px; line-height: 1.6;
   color: var(--c-text); resize: none; outline: none;
+  caret-color: var(--c-accent);
   transition: all 0.2s;
 }
 .prompt-input::placeholder { color: var(--c-text-dim); }
 .prompt-input:focus {
-  background: var(--c-surface);
-  border-color: var(--c-accent);
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+  border-color: var(--wm-accent-border);
+  box-shadow: 0 0 0 3px var(--c-accent-soft);
 }
 
-.prompt-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; gap: 12px; }
+.prompt-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 16px; gap: 12px; }
 .sample-chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .chip {
-  font-size: 11px; font-weight: 600; padding: 5px 11px;
+  font-size: 11px; font-weight: 600; padding: 7px 11px;
   background: var(--c-border-soft);
   border: 1px solid var(--c-border);
-  border-radius: 100px;
+  border-radius: var(--wm-radius-sm);
   color: var(--c-text-muted);
   cursor: pointer; transition: all 0.15s;
-  font-family: inherit;
+  font-family: var(--wm-mono);
 }
-.chip:hover { background: var(--c-accent-soft); border-color: var(--c-accent); color: var(--c-accent); }
+.chip:hover { background: var(--c-accent-soft); border-color: var(--wm-accent-border); color: var(--c-accent-text); }
 .chip:disabled { cursor: wait; opacity: 0.7; }
-.char-count { font-size: 11px; color: var(--c-text-dim); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+.char-count { font-size: 11px; color: var(--c-text-dim); font-family: var(--wm-mono); flex-shrink: 0; }
 
 /* Time Config */
 .time-config-card {
+  grid-column: 2;
   background: var(--c-surface);
   border: 1px solid var(--c-border);
-  border-radius: 14px;
-  padding: 24px;
-  margin-bottom: 24px;
+  border-radius: var(--wm-radius-md);
+  padding: 26px;
+  margin: var(--wm-gutter) 0 0;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.time-config-card:hover { border-color: #d6d3cc; box-shadow: 0 4px 16px rgba(12, 30, 62, 0.04); }
+.time-config-card:hover { border-color: var(--wm-border-strong); box-shadow: var(--wm-shadow-2); }
 
 .tc-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 .tc-icon {
-  width: 38px; height: 38px; border-radius: 10px;
-  background: var(--c-accent-soft); color: var(--c-accent);
+  width: 38px; height: 38px; border-radius: var(--wm-radius-sm);
+  background: var(--c-accent-soft); color: var(--c-accent-text);
+  border: 1px solid var(--wm-accent-border);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .tc-title-group { display: flex; flex-direction: column; gap: 2px; }
@@ -454,92 +497,106 @@ const startSimulation = () => {
   display: flex; justify-content: space-between; align-items: center;
 }
 .tc-label-val {
-  color: var(--c-accent); font-weight: 700;
-  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  color: var(--c-accent-text); font-weight: 700;
+  font-family: var(--wm-mono); font-size: 13px;
 }
 
 .seg-group {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
-  background: var(--c-border-soft); padding: 4px; border-radius: 10px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px;
+  background: var(--c-border-soft); padding: 4px;
+  border: 1px solid var(--c-border); border-radius: var(--wm-radius-sm);
 }
 .seg-btn {
-  padding: 9px 0; font-size: 13px; font-weight: 600;
-  background: transparent; border: none; border-radius: 7px;
+  padding: 11px 0; font-size: 13px; font-weight: 600;
+  background: transparent; border: none; border-radius: var(--wm-radius-sm);
   color: var(--c-text-muted); cursor: pointer;
   font-family: inherit; transition: all 0.15s;
 }
 .seg-btn:hover:not(.active) { color: var(--c-text); }
 .seg-btn.active {
-  background: var(--c-surface); color: var(--c-navy);
-  box-shadow: 0 1px 3px rgba(12, 30, 62, 0.08);
+  background: var(--c-accent); color: var(--wm-on-accent);
+  box-shadow: var(--wm-shadow-1);
   font-weight: 700;
 }
 
 .tc-range {
-  width: 100%; height: 6px;
+  width: 100%; height: 3px;
   -webkit-appearance: none; appearance: none;
-  background: var(--c-border); border-radius: 3px; outline: none;
+  background: var(--wm-border-strong); border-radius: var(--wm-radius-pill); outline: none;
   cursor: pointer;
 }
 .tc-range::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
-  width: 20px; height: 20px; border-radius: 50%;
+  width: 17px; height: 17px; border-radius: 50%;
   background: var(--c-accent); cursor: pointer;
-  border: 3px solid #fff; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.4);
+  border: 3px solid var(--c-bg); box-shadow: var(--wm-glow);
   transition: transform 0.15s;
 }
 .tc-range::-webkit-slider-thumb:hover { transform: scale(1.15); }
 .tc-range::-moz-range-thumb {
-  width: 20px; height: 20px; border-radius: 50%;
+  width: 17px; height: 17px; border-radius: 50%;
   background: var(--c-accent); cursor: pointer;
-  border: 3px solid #fff; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.4);
+  border: 3px solid var(--c-bg); box-shadow: var(--wm-glow);
 }
 .tc-range-labels {
   display: flex; justify-content: space-between;
   font-size: 11px; color: var(--c-text-dim);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--wm-mono);
 }
 
+/* flex 로 두면 "총 / 14 라운드 / 의 …" 이 각각 flex item 이 되어 좁은 열에서
+   숫자·단위가 줄바꿈으로 쪼개진다(실측). 문장은 인라인 흐름으로 흘린다. */
 .tc-summary {
-  display: flex; align-items: center; gap: 8px;
-  padding: 12px 14px;
+  display: block;
+  padding: 14px;
   background: var(--c-accent-soft);
-  border: 1px solid rgba(217, 119, 6, 0.2);
-  border-radius: 8px;
-  font-size: 12px; color: var(--c-navy);
+  border: 1px solid var(--wm-accent-border);
+  border-radius: var(--wm-radius-sm);
+  font-size: 12px; line-height: 1.55; color: var(--c-text-muted);
 }
-.tc-summary strong { color: var(--c-accent); font-weight: 700; }
+.tc-summary svg { vertical-align: -2px; margin-right: 6px; }
+.tc-summary strong { color: var(--c-accent-text); font-weight: 700; white-space: nowrap; }
 
-.submit-wrap { text-align: center; margin-bottom: 64px; }
+.submit-wrap { grid-column: 2; text-align: left; margin: 12px 0 72px; }
 .submit-btn {
-  display: inline-flex; align-items: center; gap: 10px;
-  padding: 16px 40px;
-  background: var(--c-navy); color: #fff;
-  border: none; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%;
+  padding: 17px 20px;
+  background: var(--c-accent); color: var(--wm-on-accent);
+  border: 1px solid var(--c-accent); border-radius: var(--wm-radius-sm);
   font-family: inherit; font-size: 15px; font-weight: 700;
   cursor: pointer; transition: all 0.2s;
-  box-shadow: 0 4px 14px rgba(12, 30, 62, 0.15);
+  box-shadow: var(--wm-shadow-2);
 }
 .submit-btn:hover:not(:disabled) {
-  background: var(--c-accent);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.3);
+  background: var(--c-accent-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--wm-glow), var(--wm-shadow-2);
 }
-.submit-btn:disabled { background: var(--c-border); color: var(--c-text-dim); cursor: not-allowed; box-shadow: none; }
-.hint-text { margin-top: 12px; font-size: 12px; color: var(--c-text-muted); }
+.submit-btn:disabled {
+  background: var(--c-border-soft); border-color: var(--c-border);
+  color: var(--c-text-dim); cursor: not-allowed; box-shadow: none;
+}
+.hint-text { margin-top: 12px; font-size: 12px; color: var(--c-text-dim); }
 
-.history { padding-top: 40px; border-top: 1px solid var(--c-border); }
-.history-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 20px; }
+/* --- Zone C: 아카이브 --- */
+.history { grid-column: 1 / -1; padding-top: 34px; border-top: 1px solid var(--c-border); }
+.history-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
 .history-title { font-size: 18px; font-weight: 700; color: var(--c-navy); margin: 0; }
 .history-sub { font-size: 13px; color: var(--c-text-muted); }
 
+/* 임베드(약 1080) = 1열. 스테이지 창은 hero 하단 띠로 내려간다(전역 시트가 위치를 잡는다). */
+@media (max-width: 1180px) {
+  .main { grid-template-columns: 1fr; }
+  .hero { padding-right: 0; }
+  .form-grid,
+  .time-config-card,
+  .submit-wrap { grid-column: 1; }
+}
 @media (max-width: 900px) {
-  .form-grid { grid-template-columns: 1fr; }
   .hero-title { font-size: 32px; }
-  .main { padding: 40px 20px 60px; }
 }
 @media (max-width: 600px) {
-  .nav { padding: 0 20px; }
   .nav-sub { display: none; }
   .flow-label { display: none; }
 }
